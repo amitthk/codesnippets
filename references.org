@@ -1,0 +1,1463 @@
+* linux
+
+** reset ssh keys
+#+BEGIN_SRC 
+ ssh-keygen -R <server>
+#+END_SRC
+
+- If this doesn't work -> 
+#+BEGIN_SRC 
+vi ~/.ssh/known_hosts
+#+END_SRC
+
+
+and delete the correstonding host entry
+
+** Create user
+
+User without home
+#+BEGIN_SRC 
+useradd demouser
+
+#+END_SRC
+
+Add a home directory to existing user
+
+#+BEGIN_SRC 
+
+mkdir -p /home/demouser
+chown newuser:newuser /home/demouser
+usermod -d /home/demouser demouser
+
+#+END_SRC
+
+Create a new User with home directory
+
+#+BEGIN_SRC 
+
+useradd -m demouser
+
+#+END_SRC
+
+Make the user sudo(er)
+
+#+BEGIN_SRC 
+
+usermod -aG sudo demouser
+
+#+END_SRC
+
+** Rsync from/to remote server
+
+- rsync a remote file to local
+#+BEGIN_SRC 
+rsync -v -e ssh pi@192.168.0.102:~/atksv/inbox.org /tmp
+
+#+END_SRC
+
+- backup samba config
+#+BEGIN_SRC 
+rsync /etc/samba/smb.conf administrator@192.168.0.109:/Users/administrator/Documents/src
+rsync /etc/httpd/conf/httpd.conf
+administrator@192.168.0.109:/Users/administrator/Documents/src
+rsync /etc/hostname
+administrator@192.168.0.109:/Users/administrator/Documents/src
+rsync /etc/hosts
+administrator@192.168.0.109:/Users/administrator/Documents/src
+rsync /etc/network/interfaces
+administrator@192.168.0.109:/Users/administrator/Documents/src
+ rsync /etc/samba/smb.conf administrator@192.168.0.109:/Users/administrator/Documents/src
+
+
+
+cp /etc/apache2/sites-enabled/000-default.conf ~/000-default.conf.bak1
+
+rsync ~/000-default.conf.bak1 -rtvpl administrator@192.168.0.109:/Users/administrator/Documents/src
+
+
+#+END_SRC
+
+** linux command line monitoring performance
+ - 1. Top – Linux Process Monitoring
+ - 2. VmStat – Virtual Memory Statistics
+ - 3. Lsof – List Open Files
+ - 4. Tcpdump – Network Packet Analyzer
+ - 5. Netstat – Network Statistics
+ - 6. Htop – Linux Process Monitoring
+ - 7. Iotop – Monitor Linux Disk I/O
+ - 8. Iostat – Input/Output Statistics
+ - 9. IPTraf – Real Time IP LAN Monitoring
+ - 10. Psacct or Acct – Monitor User Activity
+ - 11. Monit – Linux Process and Services Monitoring
+ - 12. NetHogs – Monitor Per Process Network Bandwidth
+ - 13. iftop – Network Bandwidth Monitoring
+ - 14. Monitorix – System and Network Monitoring
+ - 15. Arpwatch – Ethernet Activity Monitor
+ - 16. Suricata – Network Security Monitoring
+ - 17. VnStat PHP – Monitoring Network Bandwidth
+ - 18. Nagios – Network/Server Monitoring
+ - 19. Nmon: Monitor Linux Performance
+ - 20. Collectl: All-in-One Performance Monitoring Tool
+** getting list of all hostnames in lan
+  // unknown was orangepi
+ nmap -sP 192.168.1.* 
+
+** setup samba 
+  sudo apt-get install samba samba-common-bin
+
+ sudo mkdir -m 1777 /data-share
+
+*** backup the samba config file
+ sudo mv /etc/samba/smb.conf /etc/samba/smb.conf.$(date +%F)
+
+*** cleanup and create the fresh smb.conf
+  sudo grep -ve ^# -ve '^;' -ve ^$ smb.conf.2016-03-08 > smb.conf
+
+*** Go into bash and add the data share directory to the end of smb.conf
+ sudo bash
+ sudo nano smb.conf
+
+ ==> add the following data
+ [data]
+         comment = Data share
+         path = /data-share
+         browseable = yes
+         read only = no
+
+ ==> test the config
+ testparm
+
+ ==> add samba user
+ sudo smbpasswd -a pi
+
+
+** setup samba
+1. Install:
+sudo apt-get update
+sudo apt-get install samba samba-common-bin
+
+
+2. Create share directory:
+sudo mkdir -m 1777 /data-share
+
+/******
+
+    1: sets the sticky bit. This set on a directory ensures that users can only delete files they own.
+    7: sets RWX read , write and execute for the user owner
+    7: sets RWX read , write and execute for the group owner
+    7: sets RWX read , write and execute for others
+
+******/
+
+
+3. Backup smb.conf
+sudo mv /etc/samba/smb.conf /etc/samba/smb.conf.$(date +%F)
+
+4. Now copy back the trim down smb.conf with share directory information
+
+sudo bash
+grep -ve ^# -ve ‘^;’ -ve ^$ smb.conf.2015-12-07   >  smb.conf
+
+5.  Edit /etc/samba/smb.conf .Add the share information :
+
+#+BEGIN_SRC 
+[data]
+        comment = Data share
+        path = /data-share
+        browseable = yes
+        read only = no
+
+#+END_SRC
+
+6. Test config:
+testparm
+
+7. Restart samba:-
+service samba restart
+
+if that doesn't work:
+
+sudo /etc/init.d/smbd start
+
+8. Create samba users:-
+
+smbpasswd -a root
+smbpasswd -a pi
+
+** static ip
+- backup interfaces file
+#+BEGIN_SRC 
+sudo cp /etc/network/interfaces /etc/network/interfaces.bak
+
+#+END_SRC
+
+-  updat the /etc/network/interfaces file
+
+ sudo nano /etc/network/interfaces
+
+-> If this line is there - comment it out
+iface eth0 inet dhcp
+
+-> Update the static ip
+#+BEGIN_SRC 
+ # The loopback interface
+ auto lo
+ iface lo inet loopback
+ auto eth0
+ iface eth0 inet static
+ #your static IP (required)
+ address 192.168.1.118  
+ #your gateway IP
+ gateway 192.168.1.1
+ netmask 255.255.255.0 (required)
+ #your network address "family"
+ network 192.168.1.0
+ broadcast 192.168.1.255
+
+
+#+END_SRC
+
+- restart the network service
+sudo /etc/init.d/networking restart
+
+OR
+
+sudo /etc/init.d/networking reload
+
+- check the status in ifconfig
+
+** setup hostname
+ sudo nano /etc/hosts
+ sudo nano /etc/hostname
+
+ sudo reboot
+
+
+
+
+** connect to ec2
+
+ ssh -i 'Box Sync'/Docs/amitthk_aws_keypair.pem  ec2-user@ec2-52-36-166-157.us-west-2.compute.amazonaws.com
+
+** docker mysql
+
+*** create busybox repository:-
+ sudo docker run -v /var/lib/mysql --name=mysql_datastore -d busybox
+ echo 'My Datastore'
+
+*** use the repository and start mysql
+ sudo docker run --name d-mysql -e MYSQL_ROOT_PASSWORD=ditstudent --volumes-from mysql_datastore  -d mysql
+
+*** install wordpress and point it to above mysql instance. also set the port accordingly
+ sudo docker run --link=d-mysql:mysql -p 8983:80 -d wordpress
+
+** nginx on docker
+ $ docker run --name amitthk-nginx -v /some/content:/usr/share/nginx/html:ro -d nginx
+** Apache / httpd
+
+ Virtual Hosts
+ Dynamic Loading Modules
+ Multiple Process and Threads
+ Access Control and Authentication, network filtering
+ Encryption (https)
+ Compression
+ URL Rewrite
+
+people > access > resources
+
+*** Install and configuration 
+
+~yum install httpd httpd-tools httpd-manual~
+
+ main config  ~/etc/httpd/conf/httpd.conf~
+
+ additional config
+ ~/etc/httpd/conf.d/*~
+ Example config
+ ~/usr/shar/doc/httpd-<version>/~
+ httpd-default.conf,  httpd-vhosts.....
+
+
+*** Directives
+ configuration directives (default /etc/httpd)
+ ServerRoot
+ Listen
+ Include (other config in )
+ User/Group
+ DocumentRoot
+ Options
+ AllowOverride (.HTaccess  which configs allow override)
+
+ ========
+ scoped config. directives
+ ...common  
+ #+BEGIN_SRC 
+ <Directory />
+ AllowOverride none
+ Require all deny
+ </Directory>
+
+ #+END_SRC
+
+ =======
+
+#+BEGIN_SRC 
+ sudo yum install httpd httpd-tools httpd-manual -y
+ sudo firewall-cmd --add-service=httpd --permanent
+ sudo firewall-cmd --reload
+ systemctl staus httpd
+
+#+END_SRC
+ ====
+
+*** Virtualhosts
+ #+BEGIN_SRC 
+
+
+ <VirtualHost *:80>
+ ServerName www.bb.com
+ DcoumentRoot "/var/www/html/www.bb.com"
+ </VirtualHost>
+
+
+ #+END_SRC
+
+ #+BEGIN_SRC 
+
+ apachectl status
+ vi /sbin/apachects
+ sudo apachectl stop
+ apachectl configtest
+ sudo vi /etc/httpd/conf/httpd.conf
+
+ httpd -t < Syntax OK>
+ httpd -t -D DUMP_VHOSTS
+ systemctl restart httpd.service
+
+
+ #+END_SRC
+
+ ====
+#+BEGIN_SRC 
+ cd /.../conf.d/
+ mkdir -p /var/www/html/www.bb.com
+ mv /var/www/html/index.thml /var/www/html/www.bb.com/
+ cp www.psdemo.local.conf  www.bb.com.conf
+
+#+END_SRC
+  ======
+
+**** httpd.conf config for subdomain
+
+  #+BEGIN_SRC 
+
+   <VirtualHost *:80>
+   #    ServerAdmin webmaster@amitthk.com
+	DocumentRoot /var/www/vhosts/blog
+	ServerName default:80
+   #    ErrorLog /var/logs/amitthk.com-error_log
+   #    CustomLog /var/logs/amitthk.com-access_log common
+       <Directory /var/www/vhosts/blog>
+       AllowOverride All
+       </Directory>
+   </VirtualHost>
+
+  #+END_SRC
+
+*** HTTPS or SSL over TLS
+ 
+#+BEGIN_SRC 
+ <VirtualHost *:443>
+ ServerName www.bb.com:443
+ DcoumentRoot "/var/www/html/www.bb.com"
+ SSLEngine On
+ SSLCertificateFile /etc/pki/tls/certs/www.bb.com.crt
+ SSLCertificateKeyFile /etc/pki/tls/private/www.bb.com.local.key
+ </VirtualHost>
+
+#+END_SRC
+ ======
+**** Self signed certificate
+#+BEGIN_SRC 
+ yum install openssl openssl-libs -y
+ openssl genrsa -out www.bb.com.local.key 2048
+
+#+END_SRC
+***** Generate a certificate request
+ ~openssl req -new -key www.bb.com.local.key -out www.bb.com.csr~
+ <follow the prompts>
+***** Generate certificate now
+ ~openssl x509 -req -days 365 -signkey www.bb.local.key -in www.bb.local.csr -out www.bb.local.crt~
+ ~chmod 600 ww.bb.local.*~
+
+***** Move to respective places
+ #+BEGIN_SRC 
+mv www.bb.local.key /etc/pki/tls/private/
+ mv www.bb.local.crt /etc/pki/tls/certs/
+ restorecon -RvF /etc/pki/tls/
+
+ 
+ #+END_SRC
+***** Now install the SSL module
+#+BEGIN_SRC 
+ yum install mod_ssl
+ vi /etc/httpd/conf.d
+
+#+END_SRC
+ <configure the above directives>
+
+#+BEGIN_SRC 
+ systemctl restart httpd.service
+ firewall -cmd --add-service=https --permanent
+
+#+END_SRC
+***** Test the certificate
+ ~openssl s_client -connect www.bb.com.local:443 -state | more~
+
+*** Access control
+
+ Filtering 
+ - By IP ,
+ - Range of IPS,
+ - Domain Names
+
+**** Access Control
+
+***** Users
+ #+BEGIN_SRC
+ <Directory /var/www/html/www.bb.com.local/>
+ AllowOverride None
+ AuthType Basic
+ AuthName "Please enter a valid username and password"
+ AuthUserFile /etc/httpd/conf.d/.userdb
+ Require user demo
+ </Directory>
+
+ #+END_SRC
+****** Simplified
+ #+BEGIN_SRC 
+ <Directory /var/www/html/www.bb.com.local/>
+ AllowOverride AuthConfig
+ Require user demo
+ </Directory>
+
+
+ #+END_SRC
+******* Create .htaccess inside the target directory
+ #+BEGIN_SRC 
+ AuthType Basic
+ AuthName "Please enter a valid username and password"
+ AuthUserFile /etc/httpd/conf.d/.userdb
+ #+END_SRC
+
+ Create httpassword
+
+ #+BEGIN_SRC 
+ httpasswd -c /etc/httpd/conf.d/.userdb demo
+
+ httpd -t -D DUMP_VHOSTS
+ systemctl restart httpd.service
+ #+END_SRC
+
+***** IP
+ #+BEGIN_SRC 
+ <Directory /var/www/html/www.bb.com/>
+
+ Require ip 192.168.0.0/24
+ </Directory>
+
+ #+END_SRC
+
+  Block b y IP
+ #+BEGIN_SRC 
+
+ <Directory /var/www/html/www.bb.com/>
+   <RequireALL>
+    Require all granted
+    Require not ip 192.168.2.0/24
+   </RequireAll>
+ </Directory>
+
+
+ #+END_SRC
+
+*** Logging
+ Server logs
+ VSHost level logs
+
+ Logging:
+ - AccessLog
+   - LogFormat
+ - ErrorLog
+   - ErrorLogFormat
+   - LogFormat
+ - LogFormat
+   - format string   Comon - %h %l %u %t \ "%r\" %>s %b
+   - Combined .....
+   - Custom:
+     - LogFormat %h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\" Combined
+ - Log file location
+   - default: /etc/httpd/logs -> /var/log/httpd
+   - ServerRoot /etc/httpd
+   - CustomLog  "logs/access_log" combined
+
+ Log file rotation (system rotates logs by dates)
+
+**** Examining logs
+ Common log examine commands
+ - tail -f
+ - grep/egrep
+ - awk
+
+
+ ll /etc/httpd
+ vi /etc/httpd/conf.d/www.bb.com.conf
+
+ #+BEGIN_SRC 
+ <virtualhost ****>
+ CustomLog "logs/www.bb.com.local.access_log" combined
+ #+END_SRC
+
+
+ ~awk '{print $1}' access_log* | sort | uniq -c | sort~
+
+
+** Management/common Commands
+- Logs
+#+BEGIN_SRC 
+dmesg | less
+tail -f -n 5 /var/log/syslog
+less /var/log/messages
+more -f /var/log/messages
+cat /var/log/messages
+tail -f /var/log/messages
+grep -i error /var/log/messages
+awk '{print $1}' /var/log/httpd/access_log* | sort | uniq -c | sort
+
+
+#+END_SRC
+
+- Processes and Ports
+#+BEGIN_SRC 
+lsof -i :port -S
+netstat -a | grep port
+ps -A
+ps -e
+ps -aux | less
+pgrep -u root sshd
+ top -b -n1 > /tmp/process.log
+pstree
+# Threads
+ps -eLF
+ps axms
+# Security
+ps -eo euser,ruser,suser,fuser,f,comm,label
+ps axZ
+ps -eM
+
+
+#+END_SRC
+- Permissions
+#+BEGIN_SRC 
+sudo usermod -a -G www apache
+ sudo chown -R apache /var/www
+ sudo chgrp -R www /var/www
+ sudo chmod 2775 /var/www
+ find /var/www -type d -exec sudo chmod 2775 {} \;
+ find /var/www -type f -exec sudo chmod 0664 {} \;
+ sudo service httpd restart
+#+END_SRC
+
+
+
+
+** apt-get de-install broken packages
+
+*** Approach 1
+ Make a backup of /var/lib/dpkg/status:
+
+ sudo cp /var/lib/dpkg/status /var/lib/dpkg/status.bkup
+
+ Open /var/lib/dpkg/status:
+
+ sudo nano /var/lib/dpkg/status
+
+ Search through the file for any reference to that package name (i.e. linux-headers-3.0.0-19) and CAREFULLY delete that entry. Don't delete anything else. Save the file and quite.
+
+ Do sudo apt-get update.
+
+*** Approach 2
+
+ If you get nowhere with any of the other offerings I've used this in the past
+
+ dpkg --remove --force-remove-reinstreq
+ From the dpkg manual
+
+ remove-reinstreq: Remove a package, even if it's broken
+ So run:
+
+ sudo dpkg --remove --force-remove-reinstreq  linux-headers-3.0.0-19
+
+
+ https://askubuntu.com/questions/122699/how-to-remove-package-in-bad-state-software-center-freezes-no-synaptic/122737#122737?newreg=4bfa6d05048c478a814a2a80dd8c109c
+
+
+** kernel modules
+
+*** list the modules:-
+ uname -r
+*** should match the libraries:-
+ ls /lib/modules
+
+*** Else compile the latest
+ sudo aptitude install linux-image-rpi-rpfv linux-headers-rpi-rpfv
+
+
+
+*** httpd
+
+ httpd -V
+ sudo nano /etc/httpd/conf/httpd.conf
+ sudo nano /etc/httpd/logs/error_log
+ sudo service httpd restart
+
+ sudo chown -R www-data:www-data /var/www/wordpress
+ sudo chown -R www-data:www-data /var/www/vhosts/blog
+
+
+
+** fdisk resize partition
+
+From the command line or a terminal window enter the following
+
+sudo fdisk /dev/mmcblk0
+then type p to list the partition table
+
+you should see two partitions. if you look in the last column labeled System you should have
+
+Linux
+
+make a note of the start number for partiton 2, you will need this later. though it will likely still be on the screen (just in case).
+
+next type d to delete a partition.
+
+You will then be prompted for the number of the partition you want to delete. In the case above you want to delete both the Linux and Linux swap partitions.
+
+So type 2
+
+Now you can resize the main partition.
+
+type n to create a new partition.
+
+This new partition needs to be a primary partition so type p.
+
+Next enter 2 when prompted for a partition number.
+
+You will now be prompted for the first sector for the new partition. Enter the start number from the earlier step (the Linux partition)
+
+Next you will be prompted for the last sector you can just hit enter to accept the default which will utilize the remaining disk space.
+
+Type w to save the changes you have made.
+
+Next reboot the system with the following command:
+
+sudo reboot
+once the system has reboot and you are back at the commandline enter the following command:
+
+sudo resize2fs /dev/mmcblk0p2
+
+** docker on raspberry pi
+
+ wget https://downloads.hypriot.com/docker-hypriot_1.10.2-1_armhf.deb
+ dpkg -i docker-hypriot_1.10.2-1_armhf.deb
+
+** redmine on raspberry pi
+
+ http://www.tylerforsythe.com/2015/04/install-redmine-onto-raspberry-pi-2-this-is-the-tutorial-you-want/
+
+** mysql and apache2 on raspberrypi/linux
+ sudo apt-get install apache2 mysql-server
+
+*** connect to mysql
+  mysql -u root mydatabase
+ or
+  mysql -u root
+
+ mysql> show databases;
+ use redmine_default;
+ show tables;
+
+
+*** apache 2
+**** backup the default config
+ sudo cp /etc/apache2/sites-enabled/000-default.conf
+ /etc/apache2/sites-enabled/000-default.conf.bak
+
+**** edit the default config to include subsite
+
+ sudo nano /etc/apache2/sites-enabled/000-default.conf
+
+ ## Add this
+#+BEGIN_SRC 
+
+ <Directory /var/www/html/redmine>
+     RailsBaseURI /redmine
+     PassengerResolveSymlinksInDocumentRoot on
+ </Directory>
+
+#+END_SRC
+
+**** touch the gemfile
+ sudo touch /usr/share/redmine/Gemfile.lock
+ sudo chown www-data:www-data /usr/share/redmine/Gemfile.lock
+
+**** add smlink to your site
+ sudo ln -s /usr/share/redmine/public /var/www/redmine
+
+**** change owner - allow apache the access to your subsite
+  sudo chown -R www-data:www-data /var/www/redmine
+
+
+**** restart apache server
+ sudo service apache2 restart
+
+**** mod passenger config if needed
+ sudo nano /etc/apache2/mods-available/passenger.conf
+
+ ## Add this line
+ PassengerDefaultUser www-data
+
+
+
+
+
+
+
+** setup noip/ run a script at startup
+
+*** setup noip
+mkdir /home/pi/noip
+cd /home/pi/noip
+wget http://www.no-ip.com/client/linux/noip-duc-linux.tar.gz
+tar vzxf noip-duc-linux.tar.gz
+cd noip-2.1.9-1
+sudo make
+sudo make install
+
+
+
+*** Create a script in the /etc/init.d/<name of your script>
+
+
+*** Enter the contents of the script
+#+BEGIN_SRC 
+ #! /bin/sh
+ # /etc/init.d/noip 
+
+ ### BEGIN INIT INFO
+ # Provides:          noip
+ # Required-Start:    $remote_fs $syslog
+ # Required-Stop:     $remote_fs $syslog
+ # Default-Start:     2 3 4 5
+ # Default-Stop:      0 1 6
+ # Short-Description: Simple script to start a program at boot
+ # Description:       A simple script from www.stuffaboutcode.com which will start / stop a program a boot / shutdown.
+ ### END INIT INFO
+
+ # If you want a command to always run, put it here
+
+ # Carry out specific functions when asked to by the system
+ case "$1" in
+   start)
+     echo "Starting noip"
+     # run application you want to start
+     /usr/local/bin/noip2
+     ;;
+   stop)
+     echo "Stopping noip"
+     # kill application you want to stop
+     killall noip2
+     ;;
+   *)
+     echo "Usage: /etc/init.d/noip {start|stop}"
+     exit 1
+     ;;
+ esac
+
+ exit 0
+
+#+END_SRC
+
+
+*** make script executable
+ sudo chmod 755 /etc/init.d/startnoip
+
+**** Test starting the program
+ sudo /etc/init.d/startnoip start
+
+**** Test stopping the program
+ sudo /etc/init.d/startnoip stop
+
+*** Register script to be run at start-up
+
+  sudo update-rc.d startnoip defaults
+
+*** If you every want to deregister this script from running at startup
+ sudo update-rc.d -f  startnoip remove
+
+
+** configuring httpd Lamp server from aws docs
+
+*** Add the user
+
+ ls -l /var/www
+
+ sudo groupadd www
+
+ sudo usermod -a -G www ec2-user
+
+*** Logout and check the groups again
+ exit
+ groups (will show ec2-user wheel www)
+
+
+ sudo chown -R root:www /var/www
+
+ find /var/www -type d -exec sudo chmod 2775 {} \;
+
+ find /var/www -type f -exec sudo chmod 0664 {} \;
+
+
+*** Now grab & configure the wordpress
+
+
+ wget https://wordpress.org/latest.tar.gz
+
+ tar -xzf latest.tar.gz
+
+ ls
+
+
+*** Oh yes mysql - must create the database for wordpress installation first
+
+ sudo service mysqld start
+
+ mysql -u root -p
+
+ CREATE USER 'wordpress-user'@'localhost' IDENTIFIED BY 'your_strong_password';
+
+ CREATE DATABASE `wordpress-db`;
+
+ GRANT ALL PRIVILEGES ON `wordpress-db`.* TO "wordpress-user"@"localhost";
+
+ FLUSH PRIVILEGES;
+
+ exit
+
+*** edit the wp-config file inside the wordpress folder
+ cp wp-config-sample.php wp-config.php
+
+ nano wp-config.php
+
+**** Here update the DB_NAME, DB_USER, DB_PASSWORD etc. values. be careful of the quotes.
+
+*** wordpress access settings
+
+ //allow permalinks 
+
+ sudo vim /etc/httpd/conf/httpd.conf
+
+**** User permissions
+ #+BEGIN_SRC 
+sudo usermod -a -G www apache
+
+ sudo chown -R apache /var/www
+
+ sudo chgrp -R www /var/www
+
+ sudo chmod 2775 /var/www
+
+ find /var/www -type d -exec sudo chmod 2775 {} \;
+
+ find /var/www -type f -exec sudo chmod 0664 {} \;
+
+ sudo service httpd restart
+ 
+ #+END_SRC
+
+
+ [[http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/hosting-wordpress.html#create_user_and_database]]
+
+** Installing redmine
+
+ Install ruby and ruby on rails firs
+ https://github.com/bvmake/WhosGotWhat/wiki/Installing-Rails-on-free-Amazon-EC2-Micro
+
+ sudo yum install readline-devel git make zlib-devel sqlite-devel.x86_64 gcc g++ svn
+
+ gem install rails
+
+ http://stackoverflow.com/questions/3939914/how-to-install-redmine-on-fedora-11-linux/7427751#7427751
+
+** Install jupyter
+#+BEGIN_SRC 
+sudo apt-get install -y python-dev
+sudo pip install --upgrade pip
+sudo pip install jupyter
+sudo apt-get install -y python-seaborn python-pandas
+sudo apt-get install -y ttf-bitstream-vera
+
+#+END_SRC
+
+Run with the command jupyter notebook
+
+** Reinstalling ruby
+
+ http://stackoverflow.com/questions/23184819/rails-new-app-or-rails-h-craps-out-with-cannot-load-such-file-io-console
+
+** Install tightvncserver
+
+You'll be able to control it as though you were working on the Raspberry Pi itself.
+
+On your Pi (using a monitor or via SSH), install the TightVNC package:
+
+sudo apt-get install tightvncserver
+Next, run TightVNC Server which will prompt you to enter a password and an optional view-only password:
+
+tightvncserver
+Start a VNC server from the terminal: This example starts a session on VNC display one (:1) with full HD resolution:
+
+vncserver :1 -geometry 1920x1080 -depth 24
+Note that since by default an X session is started on display zero, you will get an error in case you use :0.
+
+Since there are now two X sessions running, which would normally be a waste of resources, it is suggested to stop the displaymanager running on :0 using
+
+service lightdm stop
+Now, on your computer, install and run the VNC client:
+
+On a Linux machine install the package xtightvncviewer:
+sudo apt-get install xtightvncviewer
+
+*** shortcut script
+to remember it:
+
+Create a file containing the following shell script:
+#+BEGIN_SRC 
+
+#!/bin/sh
+vncserver :1 -geometry 1920x1080 -depth 24 -dpi 96
+
+#+END_SRC
+Save this as vnc.sh (for example)
+
+Make the file executable:
+
+chmod +x vnc.sh
+Then you can run it at any time with:
+
+./vnc.sh
+If you prefer your mouse pointer in the VNC client to appear as an arrow as opposed to an "x" which is default, in ./vnc/xstartup add the following parameter to xsetroot:
+
+-cursor_name left_ptr
+
+*** run at boot
+
+To run at boot:
+
+Log into a terminal on the Pi as root:
+
+sudo su
+Navigate to the directory /etc/init.d/:
+
+cd /etc/init.d/
+Create a new file here containing the following script:
+#+BEGIN_SRC 
+
+#! /bin/sh
+# /etc/init.d/vncboot
+
+### BEGIN INIT INFO
+# Provides: vncboot
+# Required-Start: $remote_fs $syslog
+# Required-Stop: $remote_fs $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Start VNC Server at boot time
+# Description: Start VNC Server at boot time.
+### END INIT INFO
+
+USER=pi
+HOME=/home/pi
+
+export USER HOME
+
+case "$1" in
+ start)
+  echo "Starting VNC Server"
+  #Insert your favoured settings for a VNC session
+  su - $USER -c "/usr/bin/vncserver :1 -geometry 1280x800 -depth 16 -pixelformat rgb565"
+  ;;
+
+ stop)
+  echo "Stopping VNC Server"
+  /usr/bin/vncserver -kill :1
+  ;;
+
+ *)
+  echo "Usage: /etc/init.d/vncboot {start|stop}"
+  exit 1
+  ;;
+esac
+
+exit 0
+
+#+END_SRC
+Save this file as vncboot (for example)
+
+Make this file executable:
+
+chmod 755 vncboot
+Enable dependency-based boot sequencing:
+
+# update-rc.d lightdm remove
+update-rc.d vncboot defaults
+
+*** Vnc lincense copy in gmail
+
+** add repository jessie main to sources.list raspbian 
+# Edit the sources.list
+sudo nano /etc/apt/sources.list
+
+# Add Debian 8 "Jessie" repository
+deb http://http.debian.net/debian/ jessie main contrib non-free
+
+
+** dlink dwa 123 d1 drivers
+After messing arround for hours wasting time with wrong drivers,
+here's te place where if got the drivers for this usb dongle dwa 123 d1
+http://www.dlinkla.com/dwa-123
+
+** missing GPG Keys fix
+sudo apt-get install debian-keyring debian-archive-keyring
+sudo apt-get update
+
+** backup create image of raspbian sd card on mac/linux
+
+http://computers.tutsplus.com/articles/how-to-clone-raspberry-pi-sd-cards-using-the-command-line-in-os-x--mac-59911
+
+# carefully check the device location
+sudo diskutil list
+
+# create image
+sudo dd if=/dev/rdisk1 of=~/Desktop/pi.img bs=1m
+
+# or zip it on while u write
+sudo dd if=/dev/rdisk1 bs=1m | gzip > ~/Desktop/pi.gz
+
+# in above case of zipped image the restore becomes something like below
+# unmount the disk first but do not eject the card
+diskutil unmountDisk /dev/disk1 
+gzip -dc ~/Desktop/pi.gz | sudo dd of=/dev/rdisk1 bs=1m
+
+
+
+
+** setup proftpd  ftp server
+https://www.howtoforge.com/tutorial/proftpd-installation-on-debian-and-ubuntu/
+
+apt-get install proftpd openssl
+
+proftpd -v
+
+addgroup ftpgroup
+
+adduser newuser  -shell /bin/false -home /ftpshare
+Adding user 'newuser' ...
+Adding new group 'newuser' (1002) ...
+Adding new user 'newuser' (1001) with group `srijan' ...
+Creating home directory `/ftpshare' ...
+Copying files from `/etc/skel' ...
+Enter new UNIX password: <--ftppassword
+Retype new UNIX password: <--ftppassword
+passwd: password updated successfully
+Changing the user information for newuser
+Enter the new value, or press ENTER for the default<--ENTER
+    Full Name []: <--ENTER
+    Room Number []: <--ENTER
+    Work Phone []: <--ENTER
+    Home Phone []: <--ENTER
+    Other []: <--ENTER
+Is the information correct? [Y/n] <--Y
+
+adduser newuser ftpgroup
+
+chmod -R 1777 /ftpshare/
+
+nano /etc/proftpd/proftpd.conf
+
+# Make changes like as shown
+[...]
+UseIPv6 off
+[...]
+<Global>
+    RootLogin	off
+    RequireValidShell off
+</Global>
+
+DefaultRoot  ~
+
+<Limit LOGIN>
+    DenyGroup !ftpgroup
+</Limit>
+
+
+service proftpd restart
+
+
+# if you get mod_tls_memcache/0.1: notice: unable to register
+# 'memcache' SSL session cache: Memcache support not enabled
+
+nano /etc/proftpd/modules.conf
+
+[...]
+#LoadModule mod_tls_memcache.c
+[...]
+
+*** Multiple directories config
+
+chmod -R 1777 /home/amit/ftpshare/
+adduser amit ftppublicgroup
+
+
+**** emacs /etc/proftpd/proftpd.conf
+#+BEGIN_SRC 
+
+Include /etc/proftpd/conf.d/
+<Global>
+        RootLogin off
+        RequireValidShell off
+</Global>
+
+DefaultRoot ~
+
+<Limit LOGIN>
+        Order Allow,Deny
+        AllowGroup ftpgroup
+        AllowGroup ftppublicgroup
+        DenyAll
+</Limit>
+
+<Directory /ftpshare>
+# Umask 022 is a good standard umask to prevent new files and dirs                                                  
+# (second parm) from being group and world writable.                                                                
+#  Umask                                022  022                                                                    
+         <Limit ALL>
+            Order Allow,Deny
+            AllowGroup ftpgroup
+            DenyAll
+         </Limit>
+ </Directory>
+
+<Directory /home/amit/ftpshare>
+# Umask 022 is a good standard umask to prevent new files and dirs                                                  
+# (second parm) from being group and world writable.                                                                
+#  Umask                                022  022                                                                    
+         <Limit ALL>
+            Order Allow,Deny
+            AllowGroup ftppublicgroup
+            DenyAll
+         </Limit>
+ </Directory>
+ 
+
+#+END_SRC
+
+**** service proftpd restart
+
+** Writing orangepi image from mac
+ http://rayhightower.com/blog/2015/11/27/orange-pi-mini-2-setup-for-mac-os-x/
+
+#+BEGIN_SRC 
+ diskutil list
+ diskutil unmountDisk /dev/disk1
+ sudo dd if=Lubuntu_1404_For_OrangePi2-mini2_v0_8_0_.img of=/dev/disk1 bs=1m
+
+#+END_SRC
+
+
+
+
+** dotnet issues
+
+ GPG Pub_Key missing
+
+*** Here are MONO Keys
+  sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys
+  3FA7E0328081BFF6A14DA29AA6A19B38D3D831EFD
+  echo "deb http://jenkins.mono-project.com/repo/debian sid main" | sudo tee /etc/apt/sources.list.d/mono-jenkins.list
+
+
+*** Here are dotnet core keys
+
+  #+BEGIN_SRC 
+sudo sh -c 'echo "deb [arch=amd64] http://apt-mo.trafficmanager.net/repos/dotnet/ trusty main" > /etc/apt/sources.list.d/dotnetdev.list'
+
+  sudo apt-key adv --keyserver apt-mo.trafficmanager.net --recv-keys 417A0893
+  
+  #+END_SRC
+** postgresql open port
+
+~vi /etc/postgresql/9.5/main/postgresql.conf~
+
+Add this
+~listen_addresses = '*'\~
+
+~vi /etc/postgresql/9.5/main/pg_hba.conf~
+
+Add this
+
+#+BEGIN_SRC 
+host all all  ::1/128  md5
+host all postgres 127.0.0.1/32 md5
+#host  all  all 0.0.0.0/0 md5
+#hostnossl  all  all  0.0.0.0/0  trust
+#+END_SRC
+** Jenkins server initial setup
+
+#+BEGIN_SRC 
+sudo apt-get install openjdk-8-jdk -y
+sudo apt-get install openjdk-8-jre -y
+
+wget -q -O - https://pkg.jenkins.io/debian/jenkins-ci.org.key | sudo apt-key add -
+echo deb http://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list
+sudo apt-get update
+sudo apt-get install jenkins -y
+
+sudo apt-get update
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+sudo apt-key fingerprint 0EBFCD88
+sudo add-apt-repository    "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+sudo apt-get update
+sudo apt-get install docker-ce -y
+
+sudo apt-get update
+sudo apt-get install git -y
+sudo apt-get install python -y
+sudo apt-get install software-properties-common -y
+sudo apt-add-repository ppa:ansible/ansible
+sudo apt-get update
+sudo apt-get install ansible -y
+sudo apt-get install python-pip -y
+pip install awscli --upgrade --user
+sudo apt-get install python-software-properties
+
+sudo apt-get install curl -y
+curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+sudo apt-get install nodejs 
+#+END_SRC
+** http
+v1.1 1997
+v1.0 1990s
+*** v1.1
+- Messaging syntax and routing RFC 7230
+- Semantix and content RFC 7231
+- Conditional requests RFC 7232
+- Range Requests RFC 7233
+- Caching RFC 7234
+- Authentication RFC 7235
+- Authentication Scheme Registrations RFC 7236
+- Method Registrations RFC 7237
+
+Caching 
+requests -> Reverse proxy with caching -> load balancer -> api
+
+- Expiration caching
+Authorized request should use to avoid another user to sniff stale data.
+  - Expires header
+  - Cache-Control header  max-age=3600, s-maxage=1200 (shared cache of proxy)
+  - Validation caching
+    - Etag: "<some versioning string>"
+      1) Client sends current etag
+      2) Proxy responds header only 304: Not modified
+      3) Client safe to use
+      4) Another request: last modified changed - 202 Header with body returned from server
+      5) Client uses the new body
+** python test postgresql locally can connect
+write the file pgtest.py
+
+#+BEGIN_SRC 
+import psycopg2
+
+def pg_test():
+
+    try:
+        conn = psycopg2.connect("dbname='mypydb' user='sa' host='localhost' password='paxxword' connect_timeout=1 ")
+        conn.close()
+        return True
+    except:
+        return False
+#+END_SRC
+
+Go to python and run it like
+#+BEGIN_SRC 
+python
+>> import pgtest
+>> pgtest.pg_test()
+>> exit()
+#+END_SRC
+** Install oracle java
+Download the oracle java from:
+~http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html~
+
+Scp the tar to target machine
+~scp -i mykey.pem ./jdk-8u5-linux-x64.tar.gz  atk@somedomain.ddns.net:~/~
+
+On target machine unpack it to /opt/jdk
+
+~tar -zxf jdk-8u5-linux-x64.tar.gz -C /opt/jdk~
+
+Set Oracle JDK as default JVM
+
+~update-alternatives --install /usr/bin/java java /opt/jdk/jdk1.8.0_05/bin/java 100~
+~update-alternatives --install /usr/bin/javac javac /opt/jdk/jdk1.8.0_05/bin/javac 100~
+
+** Install Android Sdk
+
+Download and unzip in /opt/
+
+#+BEGIN_SRC 
+export ANDROID_HOME=/opt/android-sdk-linux
+
+wget http://dl.google.com/android/android-sdk_r24.2-linux.tgz
+tar -xvf android-sdk_r24.2-linux.tgz
+mv android-sdk-linux /opt/
+#+END_SRC
+
+Allow permissions to jenkins
+
+#+BEGIN_SRC 
+sudo chown jenkins:jenkins /opt/android-sdk-linux/
+#+END_SRC
+
+Accept the licenses
+
+#+BEGIN_SRC 
+sudo su jenkins
+/opt/android-sdk-linux/tools/android update sdk --no-ui
+#+END_SRC
+
+Set path
+
+#+BEGIN_SRC 
+export PATH=${PATH}:$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools:$ANDROID_HOME/build-tools/25.0.2/
+source /etc/profile
+#+END_SRC
+
+** Vagrant provision EC2
+
+Courtesy : https://blog.scottlowe.org/2016/09/15/using-vagrant-with-aws/
+
+- first of all install vagrant
+- vagrant plugin install vagrant-aws
+- vagrant plugin install vagrant-winnfsd
+- vagrant box add aws-dummy https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box
+
+
+
+- Crate AWS access key id and secret key
+  - aws mgmt console
+  - name > my security credentials > access keys
+  - generate access keys and download
+-   Create SSH Keypair
+  -  Ec2 console
+  -  Network and Security
+  -  Keypair download pem
+
+Write the vagrantfile 
+
+#+BEGIN_SRC 
+
+require "vagrant-aws"
+
+Vagrant.configure("2") do |config|
+
+  config.vm.box = "aws-dummy"
+  config.vm.network "private_network", ip:"192.168.90.20", type: "dhcp"
+  
+  config.vm.provider "aws" do |aws, override|
+
+    aws.access_key_id = "dfasdfsdaf"
+    aws.secret_access_key = "fdsfdsafasddfsafdasdsfasfs"
+    aws.keypair_name = "mykeypairname"
+
+    aws.ami = "ami-fc5ae39f"
+    aws.region = "ap-southeast-1"
+    aws.instance_type = "t2.micro"
+    aws.security_groups = ["default"]
+
+    override.ssh.username = "ubuntu"
+    override.ssh.private_key_path = "C:\\Apps\\Tools\\aws\\mykeypairname.pem"
+  end
+end
+#+END_SRC
+
+** javascript
+
+Makefile for angular 4 publish to s3
+
+#+BEGIN_SRC 
+node_version:=$(shell node -v)
+npm_version:=$(shell npm -v)
+timeStamp:=$(shell date +%Y%m%d%H%M%S)
+app_context:="./docker"
+aws_s3_bucket_name:= "mys3bucket-repo"
+project_name:= "myangular4project"
+
+.PHONY: show install build archive test publish clean cleanprod deploy
+
+show:
+	@ echo Timestamp: $(timeStamp)
+	@ echo Node Version: $(node_version)
+	@ echo npm_version: $(npm_version)
+
+clean:
+	echo "cleaning the dist directory"
+	@ rm -rf dist
+	@ rm -rf dist.tar.gz
+	@ rm -rf release/*.tar.gz
+
+install:
+	@ npm install --max-old-space-size=400
+
+build:
+	echo "building in production mode"
+	@ npm run build --prod --max-old-space-size=400
+
+archive:
+	@ mkdir -p release
+	@ cd dist && tar -czvf ../release/$(project_name)-$(timeStamp).tar.gz . && cd ..
+
+test:
+	echo "test the app"
+	@ npm run test
+
+publish:
+	@ aws s3 cp ./release/$(project_name)*.tar.g s3://$(aws_s3_bucket_name)/$()/$(timeStamp)/
+
+cleanprod:
+	echo "cleaning the prod directory"
+	@ rm -rf $(app_context)/app
+	@ cd ./docker && docker-compose stop $project_name_ui
+
+deploy:
+	@ mkdir $(app_context)/app
+	@ cp ./release/$(project_name)*.tar.gz $(app_context)/app/
+	@ tar -xzvf $(app_context)/app/$(project_name)*.tar.gz -C $(app_context)/app
+	@ echo running the container using docker-compose. Make sure docker, docker-compose are there and docker-compose.yaml exist in ./docker directory
+	@ cd ./docker && docker-compose up -d --build $project_name_ui
+
+INFO := @bash -c '\
+  printf $(YELLOW); \
+  echo "=> $$1"; \
+  printf $(NC)' SOME_VALUE
+#+END_SRC

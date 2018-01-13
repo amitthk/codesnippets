@@ -1,0 +1,82 @@
+* Bucket policy for s3 hosted website (not recommended)
+
+#+BEGIN_SRC 
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PublicReadForGetBucketObjects",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::mybucket-frontend/*"
+        }
+    ]
+}
+
+#+END_SRC
+
+* Folder specific s3 bucket policy for maven directory
+
+** Folowing permission for your bucket folder
+#+BEGIN_SRC 
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowUserToReadWriteObjectData",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::1234124123:user/s3_maven_user"
+            },
+            "Action": "s3:*",
+            "Resource": "arn:aws:s3:::mymaven-repo/maven/*"
+        }
+    ]
+}
+
+#+END_SRC
+
+** Following permissions for your s3 user
+
+#+BEGIN_SRC 
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowListBucketIfSpecificPrefixIsIncludedInRequest",
+            "Action": [
+                "s3:ListBucket"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::mymaven-repo"
+            ],
+            "Condition": {
+                "StringLike": {
+                    "s3:prefix": [
+                        "maven/*"
+                    ]
+                }
+            }
+        },
+        {
+            "Sid": "AllowUserToReadWriteObjectDataInMavenFolder",
+            "Action": "s3:*",
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::mymaven-repo/maven/*"
+            ]
+        }
+    ]
+}
+
+#+END_SRC
+* EC2
+** Metadata
+~curl http://169.254.169.254/latest/meta-data/~
+~curl http://169.254.169.254/latest/meta-data/public-ipv4 > dev1_ip.log~
+
