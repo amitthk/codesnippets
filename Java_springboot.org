@@ -1,0 +1,296 @@
+* Java EE and Spring Quirks & Bug Fixes
+
+** Spring boot compile both as JAR and deployable WAR
+
+In <properties> ensure
+ ~<start-class>com.boot.BlogpostApp</start-class>~
+and default packaging type ~<packaging.type>war</packaging.type>~
+
+Add the profiles for compilation to JAR or WAR
+
+#+BEGIN_SRC 
+<profiles>
+    <profile>
+      <id>jar</id>
+      <properties>
+        <packaging.type>jar</packaging.type>
+      </properties>
+    </profile>
+    <profile>
+      <id>war</id>
+      <activation>
+      <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <packaging.type>war</packaging.type>
+      </properties>
+       <dependencies>
+        <dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-tomcat</artifactId>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+#+END_SRC
+
+Add following plugin cusotmizations in the <build>
+
+#+BEGIN_SRC 
+<plugin>
+     <groupId>org.springframework.boot</groupId>
+     <artifactId>spring-boot-maven-plugin</artifactId>
+   </plugin>		
+<plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-jar-plugin</artifactId>
+	<configuration>
+		<archive>
+			<manifest>
+				<mainClass>com.boot.BlogpostApp</mainClass>
+				<addClasspath>true</addClasspath>
+			</manifest>
+		</archive>
+	</configuration>
+</plugin>
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-war-plugin</artifactId>
+  <configuration>
+    <archive>
+      <manifest>
+      	<mainClass>com.boot.BlogpostApp</mainClass>
+        <addClasspath>true</addClasspath>
+      </manifest>
+    </archive>
+  </configuration>
+</plugin>
+#+END_SRC
+
+** Spring boot 1.5.1.RELEASE CORS disable
+
+In our WebMvcConfig we configured csrf as below:
+
+#+BEGIN_SRC 
+package com.boot.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+
+@Configuration
+@EnableWebMvc
+public class WebMvcConfig extends WebMvcConfigurerAdapter{
+
+	@Override
+	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		registry.addResourceHandler("swagger-ui.html")
+			.addResourceLocations("classpath:/META-INF/resources/");
+		registry.addResourceHandler("/webjars/**")
+			.addResourceLocations("classpath:/META-INF/resources/webjars/");
+	}
+
+	@Override
+	public void addCorsMappings(CorsRegistry registry) {
+		registry.addMapping("/**")
+		.allowedOrigins("*")
+		.allowedMethods("PUT", "DELETE", "POST", "GET","PATCH")
+		.allowCredentials(false).maxAge(3600);
+	}
+	
+}
+#+END_SRC
+
+In WebSecurityConfig we have already disabled cors earlier ~http.csrf().disable();~
+
+#+BEGIN_SRC 
+package com.boot.config;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+
+@Configuration
+@EnableWebSecurity
+class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    private static final String[] AUTH_WHITELIST = {
+			"/webjars/**", 
+			"/*.html", 
+			"/favicon.ico", 
+			"/**/*.css", 
+			"/**/*.js",
+			"/v2/api-docs/**", 
+			"/swagger-resources/**",
+            "/blogposts/**",
+            "/home/**"
+    };
+    
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.csrf().disable();
+        
+        http.authorizeRequests()
+                .antMatchers(AUTH_WHITELIST).permitAll()
+                .antMatchers("/**/*").denyAll();
+    }
+
+}
+
+#+END_SRC
+
+Following filter will add the CORS headers. Modify the allowed CORS if required.
+
+#+BEGIN_SRC 
+package com.boot.config;
+
+
+import org.springframework.stereotype.Component;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+
+@Component
+public class SimpleCORSFilter implements javax.servlet.Filter {
+	@Override
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+		HttpServletResponse res = (HttpServletResponse) response;
+		HttpServletRequest  req = (HttpServletRequest) request;
+		// Just REPLY OK if request method is OPTIONS for CORS (pre-flight)
+
+		res.addHeader("Access-Control-Allow-Origin", "*");
+		res.addHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT, OPTIONS");
+		res.addHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With");
+		if ( req.getMethod().equals("OPTIONS") ) {
+        res.setStatus(HttpServletResponse.SC_OK);
+        return;
+    }
+		chain.doFilter(request, response);
+	}
+
+	@Override
+	public void destroy() {}
+
+	@Override
+	public void init(FilterConfig filterConfig) throws ServletException {}
+}
+
+#+END_SRC
+
+** Spring boot Jar runs locally but WAR shows no activity on tomcat. 
+
+Ensure you extend the 
+#+BEGIN_SRC 
+@SpringBootApplication
+@EnableConfigurationProperties
+public class BlogpostApp extends SpringBootServletInitializer
+{
+    private static final Logger log = LoggerFactory.getLogger(BlogpostApp.class);
+
+    public static void main( String[] args )
+    {
+    	log.info("Start Application BlogpostApp");
+	ConfigurableApplicationContext context = SpringApplication.run(BlogpostApp.class, args);
+	log.info("Started context "+ context.getApplicationName());
+    }
+}
+#+END_SRC
+
+** java ClassNotFoundException for org.h2.Driver
+Upgrade/downgrade accordingly the dependency for 
+#+BEGIN_SRC 
+  <dependency>
+    <groupId>com.h2database</groupId>
+    <artifactId>h2</artifactId>
+    <version>xxx</version> <!-- ex: 1.4.195 -->
+  </dependency>
+#+END_SRC
+** NoClassDefFoundError: org/hibernate/boot/MetadataBuilder, NoClassDefFoundError: org/hibernate/HibernateException
+#+BEGIN_SRC 
+<dependency>
+    <groupId>org.hibernate</groupId>
+    <artifactId>hibernate-core</artifactId>
+    <version>5.0.4.Final</version>
+</dependency>
+#+END_SRC
+** no main manifest attribute
+Following plugins to your build will add the main manifest
+
+#+BEGIN_SRC 
+<plugin>
+	<groupId>org.apache.maven.plugins</groupId>
+	<artifactId>maven-jar-plugin</artifactId>
+	<configuration>
+		<archive>
+			<manifest>
+				<mainClass>com.boot.BlogpostApp</mainClass>
+				<addClasspath>true</addClasspath>
+			</manifest>
+		</archive>
+	</configuration>
+</plugin>
+<plugin>
+       <groupId>org.apache.maven.plugins</groupId>
+       <artifactId>maven-war-plugin</artifactId>
+       <configuration>
+         <archive>
+           <manifest>
+           	<mainClass>com.boot.BlogpostApp</mainClass>
+                <addClasspath>true</addClasspath>
+           </manifest>
+         </archive>
+       </configuration>
+</plugin>
+#+END_SRC
+
+** java.lang.NoClassDefFoundError: org/springframework/boot/SpringApplication
+Add this plugin to <build> in pom.xml re-compile and run the jar, now it will package the full JAR
+#+BEGIN_SRC 
+    <plugin>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-maven-plugin</artifactId>
+    </plugin>
+#+END_SRC
+
+** Spring Boot 403 Error on POST requests
+Ensure in controller:
+~@PostMapping(value = "/blogpost")~  Or  ~@RequestMapping(method = RequestMethod.POST)~
+
+In Web security config either Disable CSRF or add the CSRF filter accordingly. Below is for disabling the csrf:
+
+#+BEGIN_SRC 
+@Configuration
+@EnableWebSecurity
+class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    private static final String[] AUTH_WHITELIST = {
+		"/webjars/**", 
+		"/*.html", 
+		"/favicon.ico", 
+		"/**/*.css", 
+		"/**/*.js",
+		"/v2/api-docs/**", 
+		"/swagger-resources/**",
+            "/blogpost/*"
+    };
+    
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+
+        http.csrf().disable();
+        
+        http.authorizeRequests()
+                .antMatchers(AUTH_WHITELIST).permitAll()
+                .antMatchers("/**/*").denyAll();
+    }
+}
+#+END_SRC
