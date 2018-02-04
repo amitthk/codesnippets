@@ -277,6 +277,52 @@ people > access > resources
  ~/usr/shar/doc/httpd-<version>/~
  httpd-default.conf,  httpd-vhosts.....
 
+*** Simple reverse proxy 
+
+Let's clean up the httpd.conf
+
+#+BEGIN_SRC 
+ sudo sed '/^[[:blank:]]*#/d;s/#.*//g' /etc/httpd/conf/httpd.conf
+#if all looks ok
+sudo sed -i.bak '/^[[:blank:]]*#/d;s/#.*//g' /etc/httpd/conf/httpd.conf
+#+END_SRC
+
+Make sure following modules are included in (/etc/httpd/conf.modules.d/00-proxy.conf) :
+
+#+BEGIN_SRC 
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule lbmethod_byrequests_module modules/mod_lbmethod_byrequests.so
+LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+#+END_SRC
+
+If not, use a2enmod to enable them.
+
+Make sure the virtualhost configs from conf.d are incluede in (/etc/httpd/conf/httpd.conf):
+
+#+BEGIN_SRC 
+Include conf.modules.d/*.conf
+#+END_SRC
+
+Add the following virtualhost config:
+
+#+BEGIN_SRC 
+<VirtualHost *:80>
+ ProxyPreserveHost On
+ ProxyPass / http://127.0.0.1:8080/
+ ProxyPassReverse / http://127.0.0.1:8080/
+</VirtualHost>
+#+END_SRC
+
+**** RHEL not able to proxy - gives Service Unavailable
+
+Run this command:
+
+~/usr/sbin/setsebool -P httpd_can_network_connect 1~
+
+It is explained here:
+
+http://sysadminsjourney.com/content/2010/02/01/apache-modproxy-error-13permission-denied-error-rhel/
 
 *** Directives
  configuration directives (default /etc/httpd)
