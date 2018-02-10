@@ -1,0 +1,68 @@
+* Angular 4 child module routes
+
+Let us say we want to have a child module named ServerManagerModule along with basic CRUD components for Servers inside this module.
+
+First of all, we create the modules something like below. Take a note the FormsModule, HttpModule and RoutingModule are included individually into child module even if they already exist in our top level AppModules.
+
+
+#+BEGIN_SRC 
+import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { HttpModule } from '@angular/http';
+
+import { ListServersComponent } from './list-servers.component';
+import { AddServersComponent } from './add-servers.component';
+import { EditServersComponent } from './edit-servers.component';
+import { ViewServersComponent } from './view-servers.component';
+import { ManageServersService } from './manage-servers.service';
+
+
+
+@NgModule({
+  imports: [
+    FormsModule,
+    HttpModule
+  ],
+  declarations: [
+    ListServersComponent,
+    AddServersComponent,
+    EditServersComponent,
+    ViewServersComponent
+  ],
+  providers: [ManageServersService],
+})
+export class ManageServersModule { }
+#+END_SRC
+
+Now the top level navigations works on the following router-outlet
+
+~<router-outlet></router-outlet>~
+
+
+The Child Module (/ServerManagerModule) routes will need to have a router-outlet with a name like this:
+
+~<router-outletv name='servermanager'></router-outlet>~
+
+And here is how we are going to use it in out App-Routing (notice the outlet='servermanager' property there.
+
+#+BEGIN_SRC 
+routes: Routes = [
+  {path:'', redirectTo: 'dashboard', pathMatch: 'full'},
+  {
+    path: 'login',
+    component: DashboardComponent,
+    
+  },
+  { path: 'home',
+    component: ListServersComponent,
+      children: [
+        {path: 'manager/list',component: ListServersComponent, outlet:'servermanager' },
+        {path:'manager/add',component:AddServersComponent, outlet:'servermanager'},
+.....
+.....
+        ]},
+ 
+
+];
+
+#+END_SRC
