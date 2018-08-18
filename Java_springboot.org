@@ -294,3 +294,27 @@ class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 }
 #+END_SRC
+
+** Gradle springboot - no main manifest attribute
+- Set the Class-Path in 
+
+#+BEGIN_SRC 
+jar {
+	from {
+		(configurations.runtime).collect {
+			it.isDirectory() ? it : zipTree(it)
+		}
+	}
+	manifest {
+		attributes 'Main-Class': 'com.amitthk.SpringBootAngularApp'
+	}
+}
+#+END_SRC
+
+** Gradle springboot No auto configuration classes found in META-INF/spring.factories 
+
+Use following goals to package springboot app
+#+BEGIN_SRC 
+build install
+bootRepackage
+#+END_SRC
