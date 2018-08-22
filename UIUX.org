@@ -1,12 +1,10 @@
-* Angular 4 child module routes
+* Angular 2/4/5 child module routes
 
-Let us say we want to have a child module named ServerManagerModule along with basic CRUD components for Servers inside this module.
+Let us say we want to have a child module named ChildModule along with its components included to parent module alongside the routing inside the nested module.
 
-First of all, we create the modules something like below. Take a note the FormsModule, HttpModule and RoutingModule are included individually into child module even if they already exist in our top level AppModules.
+First of all, we create the modules something like below. Take note the FormsModule, HttpModule and RoutingModule are included individually into child module even if they already exist in our top level AppModules.
 
-** child routes to angular 5
-
-*** Create a landing page in child module with <router-outlet>
+** Create a landing page in child module with <router-outlet>
 
 child-module/index.html
 #+BEGIN_SRC 
@@ -29,7 +27,7 @@ export class HomeComponent implements OnInit {
 }
 #+END_SRC
 
-*** Create the child-module-routes and add the RouterModule.forChild(childroutes)
+** Create the child-module-routes and add the RouterModule.forChild(childroutes)
 
 #+BEGIN_SRC 
 
@@ -61,7 +59,7 @@ export class ChildModuleRoutes { }
 
 #+END_SRC
 
-*** Export these child routes in child-module
+** Export these child routes in child-module
 
 #+BEGIN_SRC 
 
@@ -81,7 +79,7 @@ export class ChildModule { }
 
 #+END_SRC
 
-*** now simply import this module in app-module and we are good to go
+** now simply import this module in app-module and we are good to go
 
 #+BEGIN_SRC 
   imports: [
