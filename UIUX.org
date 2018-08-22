@@ -4,65 +4,90 @@ Let us say we want to have a child module named ServerManagerModule along with b
 
 First of all, we create the modules something like below. Take a note the FormsModule, HttpModule and RoutingModule are included individually into child module even if they already exist in our top level AppModules.
 
+** child routes to angular 5
 
+*** Create a landing page in child module with <router-outlet>
+
+child-module/index.html
 #+BEGIN_SRC 
-import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { HttpModule } from '@angular/http';
-
-import { ListServersComponent } from './list-servers.component';
-import { AddServersComponent } from './add-servers.component';
-import { EditServersComponent } from './edit-servers.component';
-import { ViewServersComponent } from './view-servers.component';
-import { ManageServersService } from './manage-servers.service';
-
-
-
-@NgModule({
-  imports: [
-    FormsModule,
-    HttpModule
-  ],
-  declarations: [
-    ListServersComponent,
-    AddServersComponent,
-    EditServersComponent,
-    ViewServersComponent
-  ],
-  providers: [ManageServersService],
-})
-export class ManageServersModule { }
+<router-outlet></router-outlet>
 #+END_SRC
 
-Now the top level navigations works on the following router-outlet
+child-module/index.component.ts
+#+BEGIN_SRC 
+import { Component, OnInit } from '@angular/core';
 
-~<router-outlet></router-outlet>~
+@Component({
+  selector: 'app-index',
+  templateUrl: './index.component.html',
+  styleUrls: ['./index.component.css']
+})
+export class HomeComponent implements OnInit {
+  constructor() { }
+  ngOnInit() {
+  }
+}
+#+END_SRC
 
-
-The Child Module (/ServerManagerModule) routes will need to have a router-outlet with a name like this:
-
-~<router-outletv name='servermanager'></router-outlet>~
-
-And here is how we are going to use it in out App-Routing (notice the outlet='servermanager' property there.
+*** Create the child-module-routes and add the RouterModule.forChild(childroutes)
 
 #+BEGIN_SRC 
-routes: Routes = [
-  {path:'', redirectTo: 'dashboard', pathMatch: 'full'},
-  {
-    path: 'login',
-    component: DashboardComponent,
-    
-  },
-  { path: 'home',
-    component: ListServersComponent,
-      children: [
-        {path: 'manager/list',component: ListServersComponent, outlet:'servermanager' },
-        {path:'manager/add',component:AddServersComponent, outlet:'servermanager'},
-.....
-.....
-        ]},
- 
+
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule, Routes } from '@angular/router';
+import { FindUserComponent } from './find-user/find-user.component';;
+import { HomeComponent } from './home/home.component';
+
+
+const childroutes: Routes = [
+    { path: 'useronboarding', component: HomeComponent,
+children: [
+    {path: '', redirectTo: 'home', pathMatch: 'full'},
+    {path: 'home', component: HomeComponent},
+    {path: 'find-user', component: FindUserComponent}
+]},
 
 ];
 
+@NgModule({
+    declarations: [HomeComponent,
+    FindUserComponent],
+    imports: [RouterModule.forChild(routes)],
+    exports: [RouterModule]
+})
+export class ChildModuleRoutes { }
+
+
+#+END_SRC
+
+*** Export these child routes in child-module
+
+#+BEGIN_SRC 
+
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { UserOnboardingRoutes } from './user-onboarding-routes';
+
+@NgModule({
+  imports: [
+    CommonModule,
+    ChildModuleRoutes
+  ],
+  declarations: [],
+  exports: [ChildModuleRoutes]
+})
+export class ChildModule { }
+
+#+END_SRC
+
+*** now simply import this module in app-module and we are good to go
+
+#+BEGIN_SRC 
+  imports: [
+    BrowserModule,
+    FormsModule,
+    HttpModule,
+    RouterModule,
+    ChildModule]
 #+END_SRC
