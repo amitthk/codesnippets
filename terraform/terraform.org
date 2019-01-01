@@ -1,0 +1,112 @@
+* Terraform
+** Providers
+https://www.terraform.io/docs/providers/index.html
+e.g.
+#+BEGIN_SRC 
+provider "vsphere" {
+  user           = "${var.vsphere_user}"
+  password       = "${var.vsphere_password}"
+  vsphere_server = "${var.vsphere_server}"
+
+  # if you have a self-signed cert
+  allow_unverified_ssl = true
+}
+
+#+END_SRC
+
+** [#B] Resources
+*** declaration
+component "provider_type" "name"
+e.g.
+#+BEGIN_SRC 
+resource "aws_instance" "tomcatserver"
+#+END_SRC 
+** Provisioners
+Used to execute scripts on a local or remote machine as part of resource creation or destruction.
+e.g. 
+#+BEGIN_SRC 
+resource "aws_instance" "tomcatserver" {
+  # ...
+
+  provisioner "local-exec" {
+    command    = "echo ${aws_instance.tomcatserver.private_ip} > file.txt"
+    on_failure = "continue"
+  }
+}
+#+END_SRC
+** Terraform Execution
+*** terrform init
+*** terraform plan
+*** terraform execute
+*** terraform destroy
+** Modules
+Dir Structure
+#+BEGIN_SRC 
+- Modules
+   - s3
+     - main.tf
+   - vpc
+     - main.tf
+     - variables.tf
+     - output.tf
+#+END_SRC
+
+Using it inside resources.tf
+
+#+BEGIN_SRC 
+
+module vpc {
+   source = ".\\Modules\\vpc"
+   name= "${var.environment_tag}"
+
+   azs = "${slice(data.aws_availability_zones.availability.name,0,var.subnet_count)}"
+   ...
+   ...
+}
+
+#+END_SRC
+
+Later in resources.tf
+
+#+BEGIN_SRC 
+        subnet_id = "${element.vpc.public_subnets,count.index % var.subnet_count)}"
+...
+...
+
+provisioner "file" {
+  access_key = ${module.bucket.iam_access_key_id}
+  secret_key = ${module.bucket.iam_secret_access_key}
+  use_https= True
+  bucket_location=US
+
+}
+#+END_SRC
+
+** Environment specific setup
+
+ - dev
+   - development.tfvars
+ - uat
+   - uat.tfvars
+ - prod
+   - prod.tfvars
+ - Modules
+   - s3
+     - main.tf
+   - vpc
+     - main.tf
+     - variables.tf
+     - output.tf
+ - src
+   - index.html
+   - ...
+ - outputs.tf
+ - resources.tf
+ - variables.tf
+
+*** Env specific execution
+#+BEGIN_SRC 
+terraform plan -var-files="..\terraformtf.vars" -var-file=".\dev\dev.tfvars" -state=".\dev\dev.state"
+terraform plan -var-files="..\terraformtf.vars" -var-file=".\dev\dev.tfvars" -state=".\dev\dev.state"
+terraform plan -var-files="..\terraformtf.vars" -var-file=".\dev\dev.tfvars" -state=".\dev\dev.state"
+#+END_SRC

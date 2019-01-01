@@ -1507,3 +1507,39 @@ INFO := @bash -c '\
   echo "=> $$1"; \
   printf $(NC)' SOME_VALUE
 #+END_SRC
+
+** local user install python
+
+#+BEGIN_SRC 
+curl -O https://bootstrap.pypa.io/get-pip.py
+python -m pip install ansible --user
+python -m pip install virtualenv --user
+
+#+END_SRC
+
+** python tls error
+#+BEGIN_SRC 
+pip install --trusted-host pypi.python.org --upgrad pip
+#+END_SRC
+
+** python local install python and ansible
+
+#+BEGIN_SRC 
+
+tar xzf Python-2.7.5.tgz
+cd Python-2.7.5.tgz
+mkdir -p ~/.localpython
+/configure --prefix=$HOME/.localpython
+make
+make install
+mkdir -p src
+tar -xzvf virtualenv-12.0.0.tar.gz ./src
+cd virtualenv-12.0.0
+~/.localpython/bin/python setup.py install
+python -m virtualenv venv -p $HOME/.localpython/bin/python2.7
+source venv/bin/activate
+mkdir -p ~/tmp
+tar -xzvf ansible-2.6.4 -C ~/tmp
+cd ~/tmp/ansible-2.6.4
+~/tmp/ansible-2.6.4/bin/ansible-playbook -i hosts main.yml --vvv'
+#+END_SRC
