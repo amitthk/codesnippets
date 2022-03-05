@@ -3,7 +3,8 @@ version: '3.8'
 services:
   rabbitmq:
     image: rabbitmq:3-management
-    hostname: Amits-MacBook-Pro.local 
+    hostname: Amits-MacBook-Pro.local
+    command:  bash -c 'rabbitmq-plugins enable rabbitmq_stomp && rabbitmq-server'
     volumes:
       - ./rabbitmq/etc/definitions.json:/etc/rabbitmq/definitions.json
       - ./rabbitmq/etc/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
