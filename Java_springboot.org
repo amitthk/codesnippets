@@ -318,3 +318,214 @@ Use following goals to package springboot app
 build install
 bootRepackage
 #+END_SRC
+
+** Dynamic Key value field Spring JPA
+
+#+BEGIN_SRC 
+@ElementCollection
+@MapKeyColumn("name=name")
+@Column(name="value")
+@CollectionTable(name="req_custom_fields", joinColumns=@JoinColumn(name="req_custom_field_id"))
+Map<String,String> customFields = new HashMap<String,String>();
+#+END_SRC
+
+** Persist enum to JPA entity
+
+#+BEGIN_SRC 
+public enum EMyStatusEnum{
+  DRAFT,
+  IN_PROGRESS,
+  DONE
+}
+#+END_SRC
+
+#+BEGIN_SRC 
+@Enumerated(EnumType.STRING)
+EMyStatusEnum myStatus;
+#+END_SRC
+
+*** frontend
+
+#+BEGIN_SRC 
+export enum EMyStatusEnum{
+  DRAFT = "DRAFT",
+  IN_PROGRESS = "IN_PROGRESS",
+  DONE = DONE
+}
+#+END_SRC
+
+#+BEGIN_SRC 
+?status=EMyStatusEnum[thisItem.nextStatus]
+#+END_SRC
+
+** Navigation tree
+
+#+BEGIN_SRC 
+@Data
+@Entity
+public class NavigationItem {
+
+    @Id
+    private String id;
+    private String linkUrl;
+    private String altText;
+    private int rank;
+    private int level;
+    private String lstRolesAllowed;
+
+    @ManyToOne(cascade={CascadeType.ALL})
+    @JoinColumn(name="parent_id", nullable = true, unique = false)
+    @JsonIgnore
+    private NavigationItem parent;
+
+    @OneToMany(mappedBy="parent", fetch = FetchType.EAGER)
+    @OrderBy("rank")
+    private List<NavigationItem> children = new ArrayList<>();
+
+}
+#+END_SRC
+
+#+BEGIN_SRC 
+public class NavigationItemController {
+    @Autowired
+    private NavigationItemRepository navigationItemRepository;
+    
+    @GetMapping
+    public List<NavigationItemViewModel> listNavigationItem() {
+        List<NavigationItem> lstItems = navigationItemRepository.findAll();
+        List<NavigationItemViewModel> lstReturn = new ArrayList<>();
+        lstItems.forEach(x->{
+            NavigationItemViewModel newItm = new NavigationItemViewModel();
+            BeanUtils.copyProperties(x,newItm);
+            if (x.getParent()!=null && (!x.getParent().getId().isEmpty())){
+                newItm.setParentId(x.getParent().getId());
+            }
+            lstReturn.add(newItm);
+        });
+        return lstReturn;
+    }
+
+    @GetMapping(value = "/tree")
+    public List<NavigationItem> getNavTree() {
+
+        List<NavigationItem> navigationItems = navigationItemRepository.getByParentIdNull();
+
+        //List<NavigationItem> lstRtrn = extractTreee(navigationItems);
+
+        return navigationItems;
+    }
+
+    @PostMapping
+    public NavigationItem createNavigationItem(@RequestBody NavigationItemViewModel navigationItemViewModel) {
+        String parentId = null;
+        if((navigationItemViewModel.getParentId()!=null)&&(!navigationItemViewModel.getParentId().isEmpty())){
+            parentId=navigationItemViewModel.getParentId();
+        }else if((navigationItemViewModel.getParent()!=null)&&(!navigationItemViewModel.getParent().getId().isEmpty())) {
+            parentId= navigationItemViewModel.getParent().getId();
+        }
+        if((parentId!=null) && (!parentId.isEmpty())){
+            log.info(String.format("Finding item with displayText: ", parentId));
+            Optional<NavigationItem> p = navigationItemRepository.findById(parentId);
+            if(p.isPresent()) {
+                log.info(String.format("Found: ", p.get().getId()));
+                navigationItemViewModel.setParent(p.get());
+            }
+        }else{
+            navigationItemViewModel.setParent(null);
+        }
+        NavigationItem navigationItemEntity = new NavigationItem();
+        BeanUtils.copyProperties(navigationItemViewModel,navigationItemEntity);
+        return navigationItemRepository.save(navigationItemEntity);
+    }
+
+    @GetMapping(value = "/{id}")
+    public ResponseEntity<NavigationItem> getNavigationItem(@PathVariable String id) {
+        return navigationItemRepository.findById(id).map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping(value = "/{id}")
+    public ResponseEntity<NavigationItem> updateNavigationItem(@PathVariable String id,
+                           @RequestBody NavigationItemViewModel navigationItemViewModel) {
+        Optional<NavigationItem> existingNavigationItemEntity = navigationItemRepository.findById(id);
+        if(!existingNavigationItemEntity.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String parentId = null;
+        if((navigationItemViewModel.getParentId()!=null)&&(!navigationItemViewModel.getParentId().isEmpty())){
+            parentId=navigationItemViewModel.getParentId();
+        }else if((navigationItemViewModel.getParent()!=null)&&(!navigationItemViewModel.getParent().getId().isEmpty())) {
+            parentId= navigationItemViewModel.getParent().getId();
+        }
+        if((parentId!=null) && (!parentId.isEmpty())){
+            log.info(String.format("Finding item with displayText: ", parentId));
+            Optional<NavigationItem> p = navigationItemRepository.findById(parentId);
+            if(p.isPresent()) {
+                log.info(String.format("Found: ", p.get().getId()));
+                navigationItemViewModel.setParent(p.get());
+            }
+        }else{
+            navigationItemViewModel.setParent(null);
+        }
+        BeanUtils.copyProperties(navigationItemViewModel, existingNavigationItemEntity.get());
+        return ResponseEntity.ok(navigationItemRepository.save(existingNavigationItemEntity.get()));
+    }
+
+    @DeleteMapping(value = "/{id}")
+    public void deleteNavigationItem(@PathVariable String id) {
+        navigationItemRepository.deleteById(id);
+    }
+
+    @PostMapping(value = "/bulkinsert")
+    public List<NavigationItem> bulkCreateNavigationItem(@RequestBody List<NavigationItemViewModel> navigationItem) {
+        List<NavigationItem> listToPersist = new ArrayList<>();
+        for (NavigationItemViewModel navigationItemEntity : navigationItem) {
+            String parentId = null;
+            if((navigationItemEntity.getParentId()!=null)&&(!navigationItemEntity.getParentId().isEmpty())){
+                parentId=navigationItemEntity.getParentId();
+            }else if((navigationItemEntity.getParent()!=null)&&(!navigationItemEntity.getParent().getId().isEmpty())) {
+            parentId= navigationItemEntity.getParent().getId();
+            }
+            if((parentId!=null) && (!parentId.isEmpty())){
+                log.info(String.format("Finding item with displayText: ", parentId));
+                Optional<NavigationItem> p = navigationItemRepository.findById(parentId);
+                if(p.isPresent()) {
+                    log.info(String.format("Found: ", p.get().getId()));
+                    navigationItemEntity.setParent(p.get());
+                }
+            }else{
+                navigationItemEntity.setParent(null);
+            }
+            NavigationItem itmToPersist = new NavigationItem();
+            BeanUtils.copyProperties(navigationItemEntity,itmToPersist);
+            listToPersist.add(itmToPersist);
+        }
+
+        List<NavigationItem> lstPersisted = navigationItemRepository.saveAll(listToPersist);
+        return lstPersisted;
+    }
+}
+
+#+END_SRC
+
+#+BEGIN_SRC 
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+public class NavigationItemViewModel {
+
+    private String id;
+    private String linkUrl;
+    private String altText;
+    private int rank;
+    private int level;
+    private String lstRolesAllowed;
+    private String parentId;
+    private NavigationItem parent;
+    private List<NavigationItem> children = new ArrayList<>();
+
+
+}
+#+END_SRC
