@@ -529,3 +529,39 @@ public class NavigationItemViewModel {
 
 }
 #+END_SRC
+
+** UUID spring boot
+
+#+BEGIN_SRC 
+    @Id
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
+    @Column(name = "id", columnDefinition = "BINARY(16)")
+    private UUID id;
+
+
+get(@PathVariable String id,
+
+findById(UUID.fromString((id))).get();
+#+END_SRC
+
+** boolean to checkbox angular 8
+#+BEGIN_SRC 
+<input type="checkbox" [checked]="item.selected" (change)="item.selected = !item.selected">
+#+END_SRC
+
+** angular validation
+
+#+BEGIN_SRC 
+<form name="myForm">
+<input type="text" id="myFieldName" name="myFieldName" class="form-control"
+      required minlength="4" pattern="[a-zA-Z ]*"
+      [(ngModel)]="editForm.myFieldName" #myFieldName="ngModel">
+<div *ngIf="myFieldName.invalid && (myFieldName.dirty || myFieldName.touched)"
+    class="alert">
+<span title="{{myFieldName.errors | json}}">
+This field is required. Minimum lenght: 4
+</span>
+</div>
+</form>
+#+END_SRC
