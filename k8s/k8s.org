@@ -299,7 +299,78 @@ kubectl create service workshop-new --dry-run=client -o=yaml > mysvc.yaml
 #+BEGIN_SRC 
 helm upgrade --index #get command from online
 
-kubectl create ingress nginxsvc --class=nginx  --rule=nginxsvc.info/*=nginxsvc:80
+kubectl create ingress nginxsvc --class=nginx  --rule=mydomain.com/*=nginxsvc:80
+kubectl port-forward -n ingress-nginx svc/ingress-nginx-controller 8080:80
 
+kubectl describe ingress nginxsvc
+
+
+#ingress with multiple rule#+BEGIN_SRC 
+kubectl create ingress mygress --class=nginx  --rule=mydomain.com/*=nginxsvc:80 --rule=otherserver.org/*=otherserver:80
+#+END_SRC
+
+
+* maintenance
+
+#+BEGIN_SRC 
+
+kubectl get nodes
+kubectl describe node worker1
+
+systemctl start kubelet 
+
+journalctl -u kubelet
+
+#+END_SRC
+
+* crictl
+
+#+BEGIN_SRC 
+sudo crictl ps
+
+vi /etc/critcl.yaml
+
+
+crictl ps
+
+crictl pods
+
+crictl inspect a12containerid34a
+
+crictl image
+
+crictl -h 
+#+END_SRC
+
+* staticpod
+
+dont run it on controller node 
+
+#+BEGIN_SRC 
+kubectl run staticpod --image=nginx --dry-run=client -o=yaml > staticpod.yaml
+
+cp staticpod.yaml  /etc/kubernetes/manifests/staticpod.yaml
+
+#+END_SRC
+
+
+* nodestate
+
+
+kubectl cordon/uncordon
+
+kubectl drain  , --ignore-daemonsets , --delete-emptydir-data
+
+#+BEGIN_SRC
+
+kubectl get nodes
+
+kubectl cordon worker2
+
+kubectl describe node worker2 | less
+
+kubectl uncordon worker2
+
+kubectl drain worker2 --ignore-daemonsets
 #+END_SRC
 
