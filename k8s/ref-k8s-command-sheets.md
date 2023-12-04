@@ -335,8 +335,8 @@ Side-side note: https://en.wikipedia.org/wiki/System_D
 
 # 2 => courtesy https://www.devopsmadness.com/cka_cheatsheet/
 
-Core Concepts
-View resources in namespace dev:
+# Core Concepts
+## View resources in namespace dev:
 
 kubectl get pods -n dev
 View all pods in all namespaces:
