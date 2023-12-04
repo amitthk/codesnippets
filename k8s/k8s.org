@@ -8,6 +8,7 @@ set number
 #+END_SRC
 
 #+BEGIN_SRC
+kubectl run -h
 kubectl explain pods.spec.containers
 
 
@@ -32,7 +33,7 @@ k -n world expose deploy asia --port 80
 #+END_SRC
 
 
-Create a deployment to run nginx:alpine =>
+* Create a deployment to run nginx:alpine =>
 #+BEGIN_SRC
 kubectl create deployment nginx --image=nginx:alpine --dry-run=client -o=yaml --replicas=3 > my1.yaml
 #+END_SRC
@@ -41,6 +42,22 @@ Create a deployment to run nginx:alpine =>
 #+BEGIN_SRC
 kubectl run pod1 --image=nginx --dry-run=client -o=yaml > my2.yaml
 #+END_SRC
+
+* Labels 
+
+kubectl run command can use --Labels
+
+<
+
+#BEGIN_SRC
+# Update deployment 'my-deployment' with the label 'unhealthy' and the value 'true'.
+$ kubectl label deployment my-deployment unhealthy=true
+  
+# Update deployment 'my-deployment' with the label 'status' and the value 'unhealthy', overwriting any existing value.
+$ kubectl label --overwrite deployment my-deployment status=unhealthy
+
+#END_SRC
+
 
 Create a deployment to run nginx:alpine  mount configmaps as environment variables to it =>
 
@@ -182,3 +199,107 @@ k auth can-i list pods --as system:serviceaccount:ns1:pipeline -A # YES
 k auth can-i list pods --as system:serviceaccount:ns2:pipeline -A # YES
 k auth can-i list secrets --as system:serviceaccount:ns2:pipeline -A # NO (default view-role doesn't allow)
 #+END_SRC
+
+
+
+* Daemonsets
+
+#+BEGIN_SRC
+kubectl get ds -n kube-system
+
+#Daemonsets dont usually run on controller nodes. Toleration make daemonset run on control node also
+
+kubectl create deploy mydaemon --image=nginx --dry-run=client > my.yaml
+
+#then replace Deployment with Daemonset. And remove replicas and strategy
+
+kubectl apply -f my.yaml
+
+kubectl get pods -o wide
+
+#+END_SRC
+
+
+* Statefulset
+
+#+BEGIN_SRC 
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  labels:
+    app: nginx
+spec:
+  ports:
+  - port: 80
+    name: web
+  clusterIP: None
+  selector:
+    app: nginx
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: web
+spec:
+  selector:
+    matchLabels:
+      app: nginx 
+  serviceName: "nginx"
+  replicas: 3 
+  template:
+    metadata:
+      labels:
+        app: nginx 
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: nginx
+        image: k8s.gcr.io/nginx-slim:0.8
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: www
+          mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+  - metadata:
+      name: www
+    spec:
+      accessModes: [ "ReadWriteMany" ]
+      resources:
+        requests:
+          storage: 1Gi
+#+END_SRC
+
+
+* scale
+
+#+BEGIN_SRC 
+kubectl scale deployment firstnginx --replicas 3
+#+END_SRC
+
+* k8s networking
+
+[[./k8s_networking.jpg]]
+
+#+BEGIN_SRC 
+
+kubectl create deploy workshop --image=nginx --replicas=3
+
+kubctl expose deploy workshop --type=NodePort --port=80
+
+kubectl describe svc workshop
+
+kubectl create service workshop-new --dry-run=client -o=yaml > mysvc.yaml
+#+END_SRC
+
+** ingress
+
+#+BEGIN_SRC 
+helm upgrade --index #get command from online
+
+kubectl create ingress nginxsvc --class=nginx  --rule=nginxsvc.info/*=nginxsvc:80
+
+#+END_SRC
+
