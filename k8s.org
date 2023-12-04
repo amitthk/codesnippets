@@ -1,10 +1,13 @@
 # vi ~/.vimrc
 
+#+BEGIN_SRC
 set expandtab
 set tabstop=2
 set shiftwidth=2
 set number
+#+END_SRC
 
+#+BEGIN_SRC
 kubectl explain pods.spec.containers
 
 
@@ -16,23 +19,28 @@ k -n management logs -h
 k -n management logs deploy/collect-data -c nginx >> /root/logs.log
 
 k -n management logs deploy/collect-data -c httpd >> /root/logs.log
+#+END_SRC
 
-
+#+BEGIN_SRC
 kubectl create configmap myconfigmap --from-literal=key1=value1 --from-literal=key2=value2
-
 
 kubectl create configmap trauerweide --from-literal=tree=trauerweide --dry-run=client  -o yaml > /root/cm.yaml
 
 
 k -n world expose deploy europe --port 80
 k -n world expose deploy asia --port 80
+#+END_SRC
+
 
 Create a deployment to run nginx:alpine =>
+#+BEGIN_SRC
 kubectl create deployment nginx --image=nginx:alpine --dry-run=client -o=yaml --replicas=3 > my1.yaml
+#+END_SRC
 
 Create a deployment to run nginx:alpine =>
-
+#+BEGIN_SRC
 kubectl run pod1 --image=nginx --dry-run=client -o=yaml > my2.yaml
+#+END_SRC
 
 Create a deployment to run nginx:alpine  mount configmaps as environment variables to it =>
 
