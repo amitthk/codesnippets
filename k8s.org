@@ -1,0 +1,163 @@
+# vi ~/.vimrc
+
+set expandtab
+set tabstop=2
+set shiftwidth=2
+set number
+
+kubectl explain pods.spec.containers
+
+
+tail -n500 -f /var/log/syslog | grep apiserver
+tail -n500 /var/log/pods/***/kube-system_kub-apiserver*.log
+
+k -n management get deploy
+k -n management logs -h
+k -n management logs deploy/collect-data -c nginx >> /root/logs.log
+
+k -n management logs deploy/collect-data -c httpd >> /root/logs.log
+
+
+kubectl create configmap myconfigmap --from-literal=key1=value1 --from-literal=key2=value2
+
+
+kubectl create configmap trauerweide --from-literal=tree=trauerweide --dry-run=client  -o yaml > /root/cm.yaml
+
+
+k -n world expose deploy europe --port 80
+k -n world expose deploy asia --port 80
+
+Create a deployment to run nginx:alpine =>
+kubectl create deployment nginx --image=nginx:alpine --dry-run=client -o=yaml --replicas=3 > my1.yaml
+
+Create a deployment to run nginx:alpine =>
+
+kubectl run pod1 --image=nginx --dry-run=client -o=yaml > my2.yaml
+
+Create a deployment to run nginx:alpine  mount configmaps as environment variables to it =>
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: configmap-demo-pod
+spec:
+  containers:
+    - name: demo
+      image: alpine
+      env:
+        - name: NATURE
+          valueFrom:
+            configMapKeyRef:
+              name: game-demo
+              key: nature-key-name
+      volumeMounts:
+      - name: config1
+        mountPath: "/config1"
+        readOnly: true
+      - name: config2
+        mountPath: "/config2"
+        readOnly: true
+  volumes:
+  - name: config1
+    configMap:
+      name: game-demo
+  - name: config2
+    configMap:
+      name: game-demo
+      items:
+      - key: "game.properties"
+        path: "game.properties"
+      - key: "user-interface.properties"
+        path: "user-interface.properties"
+
+
+
+We need a new NetworkPolicy named np that restricts all Pods in Namespace space1 to only have outgoing traffic to Pods in Namespace space2 . Incoming traffic not affected.
+
+We also need a new NetworkPolicy named np that restricts all Pods in Namespace space2 to only have incoming traffic from Pods in Namespace space1 . Outgoing traffic not affected.
+
+The NetworkPolicies should still allow outgoing DNS traffic on port 53 TCP and UDP.
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np
+  namespace: space1
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+     - namespaceSelector:
+        matchLabels:
+         kubernetes.io/metadata.name: space2
+  - ports:
+    - port: 53
+      protocol: TCP
+    - port: 53
+      protocol: UDP
+
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: np
+  namespace: space2
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+   - from:
+     - namespaceSelector:
+        matchLabels:
+         kubernetes.io/metadata.name: space1
+
+===
+Clusterrole:
+
+k get clusterrole view # there is default one
+
+k create clusterrole -h # examples
+
+k create rolebinding -h # examples
+
+k auth can-i delete deployments --as system:serviceaccount:ns1:pipeline -n ns1
+
+
+# create SAs
+k -n ns1 create sa pipeline
+k -n ns2 create sa pipeline
+
+# use ClusterRole view
+k get clusterrole view # there is default one
+k create clusterrolebinding pipeline-view --clusterrole view --serviceaccount ns1:pipeline --serviceaccount ns2:pipeline
+
+# manage Deployments in both Namespaces
+k create clusterrole -h # examples
+k create clusterrole pipeline-deployment-manager --verb create,delete --resource deployments
+# instead of one ClusterRole we could also create the same Role in both Namespaces
+
+k -n ns1 create rolebinding pipeline-deployment-manager --clusterrole pipeline-deployment-manager --serviceaccount ns1:pipeline
+k -n ns2 create rolebinding pipeline-deployment-manager --clusterrole pipeline-deployment-manager --serviceaccount ns2:pipeline
+
+#Check
+# namespace ns1 deployment manager
+k auth can-i delete deployments --as system:serviceaccount:ns1:pipeline -n ns1 # YES
+k auth can-i create deployments --as system:serviceaccount:ns1:pipeline -n ns1 # YES
+k auth can-i update deployments --as system:serviceaccount:ns1:pipeline -n ns1 # NO
+k auth can-i update deployments --as system:serviceaccount:ns1:pipeline -n default # NO
+
+# namespace ns2 deployment manager
+k auth can-i delete deployments --as system:serviceaccount:ns2:pipeline -n ns2 # YES
+k auth can-i create deployments --as system:serviceaccount:ns2:pipeline -n ns2 # YES
+k auth can-i update deployments --as system:serviceaccount:ns2:pipeline -n ns2 # NO
+k auth can-i update deployments --as system:serviceaccount:ns2:pipeline -n default # NO
+
+# cluster wide view role
+k auth can-i list deployments --as system:serviceaccount:ns1:pipeline -n ns1 # YES
+k auth can-i list deployments --as system:serviceaccount:ns1:pipeline -A # YES
+k auth can-i list pods --as system:serviceaccount:ns1:pipeline -A # YES
+k auth can-i list pods --as system:serviceaccount:ns2:pipeline -A # YES
+k auth can-i list secrets --as system:serviceaccount:ns2:pipeline -A # NO (default view-role doesn't allow)
