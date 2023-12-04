@@ -36,6 +36,8 @@ kubectl run pod1 --image=nginx --dry-run=client -o=yaml > my2.yaml
 
 Create a deployment to run nginx:alpine  mount configmaps as environment variables to it =>
 
+#+BEGIN_SRC
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -70,7 +72,7 @@ spec:
       - key: "user-interface.properties"
         path: "user-interface.properties"
 
-
+#+END_SRC
 
 We need a new NetworkPolicy named np that restricts all Pods in Namespace space1 to only have outgoing traffic to Pods in Namespace space2 . Incoming traffic not affected.
 
@@ -78,6 +80,7 @@ We also need a new NetworkPolicy named np that restricts all Pods in Namespace s
 
 The NetworkPolicies should still allow outgoing DNS traffic on port 53 TCP and UDP.
 
+#+BEGIN_SRC
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -98,7 +101,9 @@ spec:
     - port: 53
       protocol: UDP
 
+#+END_SRC
 
+#+BEGIN_SRC
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -113,9 +118,11 @@ spec:
      - namespaceSelector:
         matchLabels:
          kubernetes.io/metadata.name: space1
-
+#+END_SRC
 ===
 Clusterrole:
+
+#+BEGIN_SRC
 
 k get clusterrole view # there is default one
 
@@ -124,8 +131,9 @@ k create clusterrole -h # examples
 k create rolebinding -h # examples
 
 k auth can-i delete deployments --as system:serviceaccount:ns1:pipeline -n ns1
+#+END_SRC
 
-
+#+BEGIN_SRC
 # create SAs
 k -n ns1 create sa pipeline
 k -n ns2 create sa pipeline
@@ -142,7 +150,11 @@ k create clusterrole pipeline-deployment-manager --verb create,delete --resource
 k -n ns1 create rolebinding pipeline-deployment-manager --clusterrole pipeline-deployment-manager --serviceaccount ns1:pipeline
 k -n ns2 create rolebinding pipeline-deployment-manager --clusterrole pipeline-deployment-manager --serviceaccount ns2:pipeline
 
+#+END_SRC
+
 #Check
+
+#+BEGIN_SRC
 # namespace ns1 deployment manager
 k auth can-i delete deployments --as system:serviceaccount:ns1:pipeline -n ns1 # YES
 k auth can-i create deployments --as system:serviceaccount:ns1:pipeline -n ns1 # YES
@@ -161,3 +173,4 @@ k auth can-i list deployments --as system:serviceaccount:ns1:pipeline -A # YES
 k auth can-i list pods --as system:serviceaccount:ns1:pipeline -A # YES
 k auth can-i list pods --as system:serviceaccount:ns2:pipeline -A # YES
 k auth can-i list secrets --as system:serviceaccount:ns2:pipeline -A # NO (default view-role doesn't allow)
+#+END_SRC
