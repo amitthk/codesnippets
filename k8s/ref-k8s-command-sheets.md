@@ -3,17 +3,17 @@
 tips, see: https://medium.com/@mrJTY/exam-tips-for-taking-the-certified-kubernetes-admistrator-42d0b9ed72dd
 
 Bookmark these links
-One page API reference: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26
-kubectl command reference: https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands
-kubectl cheat sheet: https://kubernetes.io/docs/reference/kubectl/cheatsheet/
-Kubectl
-Enabling autocomplete
-https://kubernetes.io/docs/reference/kubectl/cheatsheet/#kubectl-autocomplete
+    One page API reference: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.26
+    kubectl command reference: https://kubernetes.io/docs/reference/generated/kubectl/kubectl-commands
+    kubectl cheat sheet: https://kubernetes.io/docs/reference/kubectl/cheatsheet/
+    Kubectl
+    Enabling autocomplete
+    https://kubernetes.io/docs/reference/kubectl/cheatsheet/#kubectl-autocomplete
 
-source <(kubectl completion bash) # set up autocomplete in bash into the current shell, bash-completion package should be installed first.
-echo "source <(kubectl completion bash)" >> ~/.bashrc # add autocomplete permanently to your bash shell.
-alias k=kubectl
-complete -o default -F __start_kubectl k
+    source <(kubectl completion bash) # set up autocomplete in bash into the current shell, bash-completion package should be installed first.
+    echo "source <(kubectl completion bash)" >> ~/.bashrc # add autocomplete permanently to your bash shell.
+    alias k=kubectl
+    complete -o default -F __start_kubectl k
 kubectl get with custom columns
 
 kubectlget deployment \
@@ -336,196 +336,197 @@ Side-side note: https://en.wikipedia.org/wiki/System_D
 # 2 => courtesy https://www.devopsmadness.com/cka_cheatsheet/
 
 # Core Concepts
-## View resources in namespace dev:
+View resources in namespace dev:
 
-kubectl get pods -n dev
+    kubectl get pods -n dev
+
 View all pods in all namespaces:
 
-kubectl get pods -A
-View all resources in all namespaces:
+    kubectl get pods -A
+    View all resources in all namespaces:
 
-kubectl get all -A
-Generate a pod yaml file with nginx image and label env=prod:
+    kubectl get all -A
+    Generate a pod yaml file with nginx image and label env=prod:
 
-kubectl run nginx --image=nginx --labels=env=prod --dry-run=client -o yaml > nginx_pod.yaml
-Delete a pod nginx fast:
+    kubectl run nginx --image=nginx --labels=env=prod --dry-run=client -o yaml > nginx_pod.yaml
+    Delete a pod nginx fast:
 
-kubectl delete pod nginx --grace-period 0 --force
-Generate Deployment yaml file:
+    kubectl delete pod nginx --grace-period 0 --force
+    Generate Deployment yaml file:
 
-kubectl create deploy --image=nginx nginx --dry-run=client -o yaml > nginx-deployment.yaml
-Access a service test-service in a different namespace dev:
+    kubectl create deploy --image=nginx nginx --dry-run=client -o yaml > nginx-deployment.yaml
+    Access a service test-service in a different namespace dev:
 
-test-service.dev
-Create a service for a pod valid-pod, which serves on port 444 with the name frontend:
+    test-service.dev
+    Create a service for a pod valid-pod, which serves on port 444 with the name frontend:
 
-kubectl expose pod valid-pod --port=444 --name=frontend
-Recreate the contents of a yaml file:
+    kubectl expose pod valid-pod --port=444 --name=frontend
+    Recreate the contents of a yaml file:
 
-kubectl replace --force -f nginx.yaml
-Edit details of a deployment nginx:
+    kubectl replace --force -f nginx.yaml
+    Edit details of a deployment nginx:
 
-kubectl edit deploy nginx
-Set image of a deployment nginx:
+    kubectl edit deploy nginx
+    Set image of a deployment nginx:
 
-kubectl set image deploy nginx nginx=nginx:1.18
-Scale deployment nginx to 4 replicas and record the action:
+    kubectl set image deploy nginx nginx=nginx:1.18
+    Scale deployment nginx to 4 replicas and record the action:
 
-kubectl scale deploy nginx --repliacs=4 --record
-Get events in current namespace:
+    kubectl scale deploy nginx --repliacs=4 --record
+    Get events in current namespace:
 
-kubectl get events
-Scheduling
-Get pods with their labels:
+    kubectl get events
+    Scheduling
+    Get pods with their labels:
 
-kubectl get pods --show-labels
-Get the pods that are labeled env=dev:
+    kubectl get pods --show-labels
+    Get the pods that are labeled env=dev:
 
-kubectl get pods -l env=dev
-Get taints of node node01:
+    kubectl get pods -l env=dev
+    Get taints of node node01:
 
-kubectl describe node node01 | grep -i Taints:
-Label node node01 with label size=small:
+    kubectl describe node node01 | grep -i Taints:
+    Label node node01 with label size=small:
 
-kubectl label nodes node01 size=small
-Default static pods path:
+    kubectl label nodes node01 size=small
+    Default static pods path:
 
-/etc/kubernetes/manifests
-Check pod nginx logs:
+    /etc/kubernetes/manifests
+    Check pod nginx logs:
 
-kubectl logs nginx
-Check pod logs with multiple containers:
+    kubectl logs nginx
+    Check pod logs with multiple containers:
 
-kubectl logs <pod_name> -c <container_name>
-Monitoring
-Check node resources usage:
+    kubectl logs <pod_name> -c <container_name>
+    Monitoring
+    Check node resources usage:
 
-kubectl top node
-Check pod and their containers resource usage:
+    kubectl top node
+    Check pod and their containers resource usage:
 
-kubectl top pod --containers=true
-Application Lifecycle Management
-Check rollout status of deployment app:
+    kubectl top pod --containers=true
+    Application Lifecycle Management
+    Check rollout status of deployment app:
 
-kubectl rollout status deployment/app
-Check rollout history of deployment app:
+    kubectl rollout status deployment/app
+    Check rollout history of deployment app:
 
-kubectl rollout history deployment/app
-Undo rollout:
+    kubectl rollout history deployment/app
+    Undo rollout:
 
-kubectl rollout undo deployment/app
-Create configmap app-config with env=dev:
+    kubectl rollout undo deployment/app
+    Create configmap app-config with env=dev:
 
-kubectl create configmap app-config --from-literal=env=dev
-Create secret app-secret with pass=123:
+    kubectl create configmap app-config --from-literal=env=dev
+    Create secret app-secret with pass=123:
 
-kubectl create secret generic app-secret --from-literal=pass=123
-Cluster Maintenance
-Drain node node01 of all workloads:
+    kubectl create secret generic app-secret --from-literal=pass=123
+    Cluster Maintenance
+    Drain node node01 of all workloads:
 
-kubectl drain node01
-Make the node schedulable again:
+    kubectl drain node01
+    Make the node schedulable again:
 
-kubectl uncordon node01
-Upgrade cluster to 1.18 with kubeadm:
+    kubectl uncordon node01
+    Upgrade cluster to 1.18 with kubeadm:
 
-kubeadm upgrade plan
-apt-get upgrade -y kubeadm=1.18.0-00
-kubeadm upgrade apply v1.18.0
-apt-get upgrade -y kubelet=1.18.0-00
-systemctl restart kubelet
-Backup etcd:
+    kubeadm upgrade plan
+    apt-get upgrade -y kubeadm=1.18.0-00
+    kubeadm upgrade apply v1.18.0
+    apt-get upgrade -y kubelet=1.18.0-00
+    systemctl restart kubelet
+    Backup etcd:
 
-export ETCDCTL_API=3
-etcdctl \
---endpoints=https://127.0.0.1:2379 \
---cacert=/etc/kubernetes/pki/etcd/ca.crt \
---cert=/etc/kubernetes/pki/etcd/server.crt \
---key=/etc/kubernetes/pki/etcd/server.key \
-snapshot save /tmp/etcd-backup.db
-Restore etcd:
+    export ETCDCTL_API=3
+    etcdctl \
+    --endpoints=https://127.0.0.1:2379 \
+    --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+    --cert=/etc/kubernetes/pki/etcd/server.crt \
+    --key=/etc/kubernetes/pki/etcd/server.key \
+    snapshot save /tmp/etcd-backup.db
+    Restore etcd:
 
-ETCDCTL_API=3 etcdctl snapshot restore /tmp/etcd-backup.db --data-dir /var/lib/etcd-backup
-After edit /etc/kubernetes/manifests/etcd.yaml and change /var/lib/etcd to /var/lib/etcd-backup.
+    ETCDCTL_API=3 etcdctl snapshot restore /tmp/etcd-backup.db --data-dir /var/lib/etcd-backup
+    After edit /etc/kubernetes/manifests/etcd.yaml and change /var/lib/etcd to /var/lib/etcd-backup.
 
-Security
-Create service account sa_1
+    Security
+    Create service account sa_1
 
-kubectl create serviceaccount sa_1
-Check kube-apiserver certificate details:
+    kubectl create serviceaccount sa_1
+    Check kube-apiserver certificate details:
 
-openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
-Approve certificate singing request for user john:
+    openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
+    Approve certificate singing request for user john:
 
-kubectl certificate approve john
-Check the current kubeconfig file:
+    kubectl certificate approve john
+    Check the current kubeconfig file:
 
-kubectl config view
-Check current context:
+    kubectl config view
+    Check current context:
 
-kubectl config current-context
-Use context dev-user@dev:
+    kubectl config current-context
+    Use context dev-user@dev:
 
-kubectl config use-context prod-user@production
-Validate if user john can create deployments:
+    kubectl config use-context prod-user@production
+    Validate if user john can create deployments:
 
-kubectl auth can-i create deployments --as john
-Create role dev to be able to create secrets:
+    kubectl auth can-i create deployments --as john
+    Create role dev to be able to create secrets:
 
-kubectl create role dev --verb=create --resource=secret
-Bind the role dev to user john:
+    kubectl create role dev --verb=create --resource=secret
+    Bind the role dev to user john:
 
-kubectl create rolebinding dev-john --role dev --user john
-Check namespaced resources:
+    kubectl create rolebinding dev-john --role dev --user john
+    Check namespaced resources:
 
-kubectl api-resources --namespaced=true
-Troubleshooting
-View all the kube-system related pods:
+    kubectl api-resources --namespaced=true
+    Troubleshooting
+    View all the kube-system related pods:
 
-kubectl get pods -n kube-system
-Check if all nodes are in ready state:
+    kubectl get pods -n kube-system
+    Check if all nodes are in ready state:
 
-kubectl get nodes
-Check memory, cpu and disk usage on node:
+    kubectl get nodes
+    Check memory, cpu and disk usage on node:
 
-df -h
-top
-Check status of kubelet service on node:
+    df -h
+    top
+    Check status of kubelet service on node:
 
-systemctl status kubelet
-Check kubelet service logs:
+    systemctl status kubelet
+    Check kubelet service logs:
 
-sudo journalctl -u kubelet
-View kubelet service details:
+    sudo journalctl -u kubelet
+    View kubelet service details:
 
-ps -aux | grep kubelet
-Check cluster info:
+    ps -aux | grep kubelet
+    Check cluster info:
 
-kubectl cluster-info
-Gather info
-Find pod CIDR:
+    kubectl cluster-info
+    Gather info
+    Find pod CIDR:
 
-kubectl describe node | less -p PodCIDR
-Get pods in all namespaces sorted by creation timestamp:
+    kubectl describe node | less -p PodCIDR
+    Get pods in all namespaces sorted by creation timestamp:
 
-kubectl get pod -A --sort-by=.metadata.creationTimestamp
-Find the service CIDR of node-master:
+    kubectl get pod -A --sort-by=.metadata.creationTimestamp
+    Find the service CIDR of node-master:
 
-ssh node0master
-cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep range
-Find which CNI plugin is used on node-master:
+    ssh node0master
+    cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep range
+    Find which CNI plugin is used on node-master:
 
-ls /etc/cni/net.d/
-Find events ordered by creation timestamp:
+    ls /etc/cni/net.d/
+    Find events ordered by creation timestamp:
 
-kubectl get events -A --sort-by=.metadata.creationTimestamp
-Find internal IP of all nodes:
+    kubectl get events -A --sort-by=.metadata.creationTimestamp
+    Find internal IP of all nodes:
 
-kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}'
-General notes
-To create a daemonset, use kubectl create deploy command to create a .yaml file and then change the kind and remove replicas & strategy.
-To find the static pod manifest path, check the exec command of kubelet service or staticPodPath parameter of kubelet’s config file.
-To create a static pod, place a yaml definition file in the staticPodPath directory.
-To identify static pods look for the suffix -<node_name> on pods.
-To add a new scheduler copy the existing one and add to the container’s command the flags--leader-elect=false and --scheduler-name=my-scheduler-name. To use the new scheduler under spec of a pod definition file specify the option schedulerName.
-To add a default command to a pod use command that overrides the default ENTRYPOINT from Dockerfile. Use args to override the Dockerfile CMD command for the commmand’s extra parameters.
+    kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}'
+    General notes
+    To create a daemonset, use kubectl create deploy command to create a .yaml file and then change the kind and remove replicas & strategy.
+    To find the static pod manifest path, check the exec command of kubelet service or staticPodPath parameter of kubelet’s config file.
+    To create a static pod, place a yaml definition file in the staticPodPath directory.
+    To identify static pods look for the suffix -<node_name> on pods.
+    To add a new scheduler copy the existing one and add to the container’s command the flags--leader-elect=false and --scheduler-name=my-scheduler-name. To use the new scheduler under spec of a pod definition file specify the option schedulerName.
+    To add a default command to a pod use command that overrides the default ENTRYPOINT from Dockerfile. Use args to override the Dockerfile CMD command for the commmand’s extra parameters.
