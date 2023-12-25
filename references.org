@@ -1543,3 +1543,81 @@ tar -xzvf ansible-2.6.4 -C ~/tmp
 cd ~/tmp/ansible-2.6.4
 ~/tmp/ansible-2.6.4/bin/ansible-playbook -i hosts main.yml --vvv'
 #+END_SRC
+
+
+* GCP
+
+#+BEGIN_SRC 
+gcloud auth login
+gcloud config set project stridecal-web-dev
+gcloud auth configure-docker asia-southeast1
+
+gcloud iam service-accounts list
+
+gcloud auth activate-service-account artifact-deployer@stridecal-web-dev.iam.gserviceaccount.com --key-file=/Users/amitthakur/Downloads/stridecal-web-dev-artifact-deployer-c28f6aa6fe9c.json
+
+gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://asia.gcr.io
+gcloud auth configure-docker
+
+docker push asia.gcr.io/stridecal-web-dev/stridecal-docker/stridecal-spring-reactjs:eureka-server
+docker images | grep asia.gcr.io | awk '{print "docker push "$1":"$2}' | bash
+
+
+#+END_SRC
+
+* Setup python and jdk debian VmStat
+
+#+BEGIN_SRC 
+#!/bin/bash
+
+# Update and Upgrade
+sudo apt-get update && sudo apt-get upgrade -y
+
+# Install Python3
+sudo apt-get install python3 python3-pip -y
+
+# Install Java OpenJDK 17
+sudo apt-get install openjdk-17-jdk -y
+
+# Install Maven
+sudo apt-get install maven -y
+
+# Install Docker
+sudo apt-get install docker.io -y
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Install Docker-Compose
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Install Google Cloud SDK
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+sudo apt-get update && sudo apt-get install google-cloud-sdk -y
+
+# Install kubectl
+sudo apt-get install kubectl -y
+
+# Install Jupyter Notebook
+pip3 install notebook
+
+# Setup Jupyter Notebook
+jupyter notebook --generate-config
+read -p "Enter the full path to your SSL certificate: " ssl_cert
+read -p "Enter the full path to your SSL key: " ssl_key
+read -s -p "Enter your Jupyter Notebook password: " jupyter_pwd
+
+# Configure Jupyter to use SSL and a password
+echo "
+c = get_config()
+c.NotebookApp.certfile = u'$ssl_cert'
+c.NotebookApp.keyfile = u'$ssl_key'
+c.NotebookApp.ip = '0.0.0.0'
+c.NotebookApp.open_browser = False
+c.NotebookApp.password = u'$jupyter_pwd'
+" >> ~/.jupyter/jupyter_notebook_config.py
+
+echo "Setup Complete. You can now start Jupyter Notebook with 'jupyter notebook'"
+
+#+END_SRC
