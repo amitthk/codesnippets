@@ -1640,10 +1640,17 @@ sudo apt-get install kubectl -y
 pip3 install notebook
 
 # Setup Jupyter Notebook
+
 jupyter notebook --generate-config
 read -p "Enter the full path to your SSL certificate: " ssl_cert
 read -p "Enter the full path to your SSL key: " ssl_key
-read -s -p "Enter your Jupyter Notebook password: " jupyter_pwd
+
+echo "Generate a password for your notebook in next prompt:"
+jupyter notebook password
+echo "Copy the password from config file to be used next"
+cat /home/jupyter/.jupyter/jupyter_server_config.json
+
+read -s -p "Enter your copied password: " jupyter_pwd
 
 # Configure Jupyter to use SSL and a password
 echo "
