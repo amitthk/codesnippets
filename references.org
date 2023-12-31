@@ -1556,12 +1556,49 @@ gcloud iam service-accounts list
 
 gcloud auth activate-service-account artifact-deployer@stridecal-web-dev.iam.gserviceaccount.com --key-file=/Users/amitthakur/Downloads/stridecal-web-dev-artifact-deployer-c28f6aa6fe9c.json
 
-gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://asia.gcr.io
-gcloud auth configure-docker
+# gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://asia.gcr.io
 
-docker push asia.gcr.io/stridecal-web-dev/stridecal-docker/stridecal-spring-reactjs:eureka-server
-docker images | grep asia.gcr.io | awk '{print "docker push "$1":"$2}' | bash
+gcloud auth configure-docker asia-southeast1-docker.pkg.dev
 
+docker push asia-southeast1-docker.pkg.dev/stridecal-web-dev/stridecal-docker/eureka-server:latest
+docker images | grep asia-southeast1-docker.pkg.dev | awk '{print "docker push "$1":"$2}' | bash
+
+
+gcloud container clusters list
+gcloud projects list
+gcloud config set project stridecal-web-dev-409409
+gcloud container clusters list
+gcloud container clusters get-credentials autopilot-cluster-1 --region=us-central1
+kubectl get pods
+kubectl get ns
+
+
+#+END_SRC
+
+Create deployment and service:
+
+#+BEGIN_SRC 
+kubectl create deployment eureka-server --image=asia-southeast1-docker.pkg.dev/stridecal-web-dev-409409/stridecal-docker/eureka-server:latest --dry-run=client -o yaml
+#+END_SRC
+
+#+BEGIN_SRC 
+kubectl expose deployment eureka-server --port=8761 -o yaml --dry-run=client
+#+END_SRC
+
+Create public ip if using service:
+
+#+BEGIN_SRC 
+gcloud compute addresses create eureka-server-ip --region us-central1
+gcloud compute addresses describe eureka-server-ip --region us-central1
+#+END_SRC
+
+To fix the image pull back off problem from artifact registry:
+
+#+BEGIN_SRC 
+gcloud artifacts repositories add-iam-policy-binding stridecal-docker \
+  --location=asia-southeast1 \
+  --member=serviceAccount:774957052955-compute@developer.gserviceaccount.com \
+  --role="roles/artifactregistry.reader"
 
 #+END_SRC
 
