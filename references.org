@@ -1597,7 +1597,7 @@ To fix the image pull back off problem from artifact registry:
 #+BEGIN_SRC 
 gcloud artifacts repositories add-iam-policy-binding stridecal-docker \
   --location=asia-southeast1 \
-  --member=serviceAccount:774957052955-compute@developer.gserviceaccount.com \
+  --member=serviceAccount:<NNNN-my-account-number-in-digits>-compute@developer.gserviceaccount.com \
   --role="roles/artifactregistry.reader"
 
 #+END_SRC
@@ -1663,5 +1663,29 @@ c.NotebookApp.password = u'$jupyter_pwd'
 " >> ~/.jupyter/jupyter_notebook_config.py
 
 echo "Setup Complete. You can now start Jupyter Notebook with 'jupyter notebook'"
+
+#+END_SRC
+
+Sample generated:
+
+#+BEGIN_SRC 
+c = get_config()
+c.NotebookApp.certfile = u'/usr/share/ssl/stridecal.crt'
+c.NotebookApp.keyfile = u'/usr/share/ssl/stridecal.key'
+c.NotebookApp.ip = '0.0.0.0'
+c.NotebookApp.open_browser = False
+c.NotebookApp.password = '<hash>'
+#+END_SRC
+
+mounting the secret volume to jupyter pod 
+#+BEGIN_SRC 
+        volumeMounts:
+        - name: secret-volume
+          mountPath: /etc/secret-volume
+          readOnly: true
+      volumes:
+      - name: secret-volume
+        secret:
+          secretName: jupyter-secret
 
 #+END_SRC
