@@ -1689,3 +1689,34 @@ mounting the secret volume to jupyter pod
           secretName: jupyter-secret
 
 #+END_SRC
+
+* watch command alternative while loop
+
+#+BEGIN_SRC 
+while true;do  kubectl logs user-service-5769dd6c45-9258j; sleep 3;done
+#+END_SRC
+
+* postgres commands to grant access
+
+#+BEGIN_SRC 
+create database "user";
+create database "note";
+create database "chat";
+create database "lists";
+create database "notification";
+create database "tag";
+create database "topic";
+\list
+create user postgres;
+alter user postgres with encrypted password 'a-very-secure-pass-wd';
+grant all privileges on database "tweet" to "postgres";
+\c tweet postgres-root;
+GRANT ALL ON SCHEMA public TO "postgres";
+\q
+#+END_SRC
+
+* docker build an image for a specific platform 
+
+#+BEGIN_SRC 
+docker buildx build --platform linux/amd64  -t us-docker.pkg.dev/stridecal-web-dev/stridecal-docker/config-server:latest .
+#+END_SRC
