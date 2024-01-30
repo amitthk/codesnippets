@@ -374,3 +374,9 @@ kubectl uncordon worker2
 kubectl drain worker2 --ignore-daemonsets
 #+END_SRC
 
+* service account token
+
+#+BEGIN_SRC
+TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+curl -H "Authorization: Bearer $TOKEN" --insecure https://kubernetes/api/v1/namespaces/default/pods
+#+END_SRC

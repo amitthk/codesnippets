@@ -1720,3 +1720,11 @@ GRANT ALL ON SCHEMA public TO "postgres";
 #+BEGIN_SRC 
 docker buildx build --platform linux/amd64  -t us-docker.pkg.dev/stridecal-web-dev/stridecal-docker/config-server:latest .
 #+END_SRC
+
+* Build lambda function with docker image
+
+#+BEGIN_SRC 
+mvn compile dependency:copy-dependencies -DincludeScope=runtime -f pom.xml
+docker buildx build --platform linux/amd64 -t 197991497670.dkr.ecr.ap-southeast-1.amazonaws.com/stridecal-smtp:latest .
+
+#+END_SRC
