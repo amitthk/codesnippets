@@ -1725,7 +1725,7 @@ docker buildx build --platform linux/amd64  -t us-docker.pkg.dev/stical-web-dev/
 
 #+BEGIN_SRC 
 mvn compile dependency:copy-dependencies -DincludeScope=runtime -f pom.xml
-docker buildx build --platform linux/amd64 -t 197991497670.dkr.ecr.ap-southeast-1.amazonaws.com/stical-smtp:latest .
+docker buildx build --platform linux/amd64 -t {AWS_ACCOUNT_ID}.dkr.ecr.ap-southeast-1.amazonaws.com/stical-smtp:latest .
 
 #+END_SRC
 
@@ -1760,4 +1760,174 @@ cat <<EOF > ./dropcreate_db.sh
 #!/bin/bash
 echo "testfile"
 EOF
+#+END_SRC
+
+
+* deploying container app to aws eks fargate
+
+https://repost.aws/knowledge-center/eks-alb-ingress-controller-fargate
+
+https://www.stacksimplify.com/aws-eks/aws-alb-ingress/learn-to-enable-ssl-on-alb-ingress-service-in-kubernetes-on-aws-eks/
+
+
+#+BEGIN_SRC 
+eksctl create cluster --name myapp-sit --version 1.28 --fargate
+#+END_SRC
+
+
+#+BEGIN_SRC 
+eksctl utils associate-iam-oidc-provider --cluster myapp-sit --approve
+
+#+END_SRC
+
+#+BEGIN_SRC 
+curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.6.1/docs/install/iam_policy.json
+
+#+END_SRC
+
+#+BEGIN_SRC 
+aws iam create-policy \
+--policy-name AWSLoadBalancerControllerIAMPolicy \
+--policy-document file://iam_policy.json
+
+#+END_SRC
+#+BEGIN_SRC 
+
+eksctl create iamserviceaccount \
+--cluster=myapp-sit \
+--namespace=kube-system \
+--name=aws-load-balancer-controller \
+--attach-policy-arn=arn:aws:iam::{AWS_ACCOUNT_ID}:policy/AWSLoadBalancerControllerIAMPolicy \
+--override-existing-serviceaccounts \
+--approve
+
+
+#+END_SRC
+
+#+BEGIN_SRC 
+eksctl get iamserviceaccount --cluster myapp-sit --name aws-load-balancer-controller --namespace kube-system
+
+#+END_SRC
+
+#+BEGIN_SRC 
+helm repo add eks https://aws.github.io/eks-charts
+
+helm repo update eks 
+
+aws ec2 describe-vpcs --query "Vpcs[0].VpcId" --output text
+
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+--set clusterName=myapp-sit \
+--set serviceAccount.create=false \
+--set region=ap-southeast-1 \
+--set vpcId={replace_this_vpc_id} \
+--set serviceAccount.name=aws-load-balancer-controller \
+-n kube-system
+
+
+#+END_SRC
+
+#+BEGIN_SRC
+eksctl create fargateprofile \
+  --cluster myapp-sit \
+  --region ap-southeast-1 \
+  --name fp-myapp-sit \
+  --namespace myapp-sit
+
+eksctl eks describe-fargate-profile \
+  --cluster myapp-sit \
+  --region ap-southeast-1 \
+  --fargate-profile-name fp-myapp-sit 
+
+#+END_SRC
+=======================
+# Create the config-server.yaml file with the following content:
+
+#+BEGIN_SRC
+cat <<EOF > config-server.yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: myapp-sit
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: myapp-sit
+  name: config-server
+spec:
+  selector:
+    matchLabels:
+      app: config-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: config-server
+    spec:
+      containers:
+      - image: {AWS_ACCOUNT_ID}.dkr.ecr.ap-southeast-1.amazonaws.com/myapp/config-service:latest
+        imagePullPolicy: Always
+        name: app-config-server
+        ports:
+        - containerPort: 8088
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: myapp-sit
+  name: service-config-server
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-type: external
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:us-east-1:{AWS_ACCOUNT_ID}:certificate/c5469fbe-5f55-4505-b77b-be5d82ebbb64
+spec:
+  ports:
+    - port: 443
+      name: https
+      targetPort: 8088
+      protocol: TCP
+  type: LoadBalancer
+  selector:
+    app: config-server
+EOF
+#+END_SRC
+
+To check the ip address of the ingress controller, run the following command:
+
+#+BEGIN_SRC 
+kubectl get svc -n myapp-sit
+
+kubectl logs -f -n myapp-sit deployment/config-server
+
+#+END_SRC
+
+Troubleshooting:
+
+#+BEGIN_SRC 
+kubectl logs -n kube-system deployment.apps/aws-load-balancer-controller
+
+kubectl get endpoints -n myapp-sit
+
+kubectl get ingress -n myapp-sit
+
+
+kubectl apply -f config-server.yaml
+
+
+kubectl get pods -n myapp-sit
+
+
+kubectl get ingress -n myapp-sit
+
+kubectl port-forward -n myapp-sit svc/service-config-server 8080:8088
+
+
+helm uninstall aws-load-balancer-controller -n  kube-system
+
+
+
 #+END_SRC
