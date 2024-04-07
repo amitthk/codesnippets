@@ -1,0 +1,302 @@
+name: Build and Push Docker images
+
+on:
+  push:
+    branches:
+      - master
+      - release/*
+      - uat/*
+      - develop
+
+env:
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Set up Maven
+        run: |
+          sudo apt-get install -y maven
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Build with Maven
+        run: mvn -DskipTests clean install
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Login to docker with ecr creds
+        run: |
+          docker login -u AWS -p $(aws ecr get-login-password --region ap-southeast-1) ${{ secrets.ECR_REGISTRY }}
+
+      - name: Build and push eureka-server image
+        run: |
+          REPO_NAME="stical/eureka-server"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+          
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/eureka-server:latest ./eureka-server
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/eureka-server:latest
+
+      - name: Build and push config-server image
+        run: |
+          REPO_NAME="stical/config-server"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+          
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/config-server:latest ./config-server
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/config-server:latest
+
+      - name: Build and push api-gateway image
+        run: |
+          REPO_NAME="stical/api-gateway"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+          
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/api-gateway:latest ./api-gateway
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/api-gateway:latest
+
+      - name: Build and push user-service image
+        run: |
+          REPO_NAME="stical/user-service"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+          
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/user-service:latest ./user-service
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/user-service:latest
+
+      - name: Build and push tweet-service image
+        run: |
+          REPO_NAME="stical/tweet-service"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+          
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/tweet-service:latest ./tweet-service
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/tweet-service:latest
+
+      - name: Build and push topic-service image
+        run: |
+          REPO_NAME="stical/topic-service"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+          
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/topic-service:latest ./topic-service
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/topic-service:latest
+
+      - name: Build and push tag-service image
+        run: |
+          REPO_NAME="stical/tag-service"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+          
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/tag-service:latest ./tag-service
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/tag-service:latest
+
+      - name: Build and push lists-service image
+        run: |
+          REPO_NAME="stical/lists-service"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+          
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/lists-service:latest ./lists-service
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/lists-service:latest
+
+      - name: Build and push chat-service image
+        run: |
+          REPO_NAME="stical/chat-service"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+          
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/chat-service:latest ./chat-service
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/chat-service:latest
+
+      - name: Build and push notification-service image
+        run: |
+          REPO_NAME="stical/notification-service"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+          
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/notification-service:latest ./notification-service
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/notification-service:latest
+
+      - name: Build and push email-service image
+        run: |
+          set -e
+          REPO_NAME="stical/email-service"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+        
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+          
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/email-service:latest ./email-service
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/email-service:latest
+
+      - name: Build and push image-service image
+        run: |
+          set -e
+          REPO_NAME="stical/image-service"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+        
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+        
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/image-service:latest ./image-service
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/image-service:latest
+
+      - name: Build and push websocket-service image
+        run: |
+          set -e
+          REPO_NAME="stical/websocket-service"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+          
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+    
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/websocket-service:latest ./websocket-service
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/websocket-service:latest
+
+      - name: Build and push nginx image
+        run: |
+          set -e
+          REPO_NAME="stical/nginx"
+          REGION="${{ secrets.AWS_REGION }}"
+          ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
+          # Check if the repository exists
+          if ! aws ecr describe-repositories --region $REGION --repository-names $REPO_NAME; then
+          echo "Repository $REPO_NAME does not exist. Creating..."
+          aws ecr create-repository --region $REGION --repository-name $REPO_NAME
+          else
+          echo "Repository $REPO_NAME already exists. Skipping creation..."
+          fi
+
+          docker build -t ${{ secrets.ECR_REGISTRY }}/stical/nginx:latest ./nginx
+          docker push ${{ secrets.ECR_REGISTRY }}/stical/nginx:latest

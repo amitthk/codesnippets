@@ -1549,24 +1549,24 @@ cd ~/tmp/ansible-2.6.4
 
 #+BEGIN_SRC 
 gcloud auth login
-gcloud config set project stridecal-web-dev
+gcloud config set project stical-web-dev
 gcloud auth configure-docker asia-southeast1
 
 gcloud iam service-accounts list
 
-gcloud auth activate-service-account artifact-deployer@stridecal-web-dev.iam.gserviceaccount.com --key-file=/Users/amitthakur/Downloads/stridecal-web-dev-artifact-deployer-c28f6aa6fe9c.json
+gcloud auth activate-service-account artifact-deployer@stical-web-dev.iam.gserviceaccount.com --key-file=/Users/amitthakur/Downloads/stical-web-dev-artifact-deployer-c28f6aa6fe9c.json
 
 # gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://asia.gcr.io
 
 gcloud auth configure-docker asia-southeast1-docker.pkg.dev
 
-docker push asia-southeast1-docker.pkg.dev/stridecal-web-dev/stridecal-docker/eureka-server:latest
+docker push asia-southeast1-docker.pkg.dev/stical-web-dev/stical-docker/eureka-server:latest
 docker images | grep asia-southeast1-docker.pkg.dev | awk '{print "docker push "$1":"$2}' | bash
 
 
 gcloud container clusters list
 gcloud projects list
-gcloud config set project stridecal-web-dev-409409
+gcloud config set project stical-web-dev-409409
 gcloud container clusters list
 gcloud container clusters get-credentials autopilot-cluster-1 --region=us-central1
 kubectl get pods
@@ -1578,7 +1578,7 @@ kubectl get ns
 Create deployment and service:
 
 #+BEGIN_SRC 
-kubectl create deployment eureka-server --image=asia-southeast1-docker.pkg.dev/stridecal-web-dev-409409/stridecal-docker/eureka-server:latest --dry-run=client -o yaml
+kubectl create deployment eureka-server --image=asia-southeast1-docker.pkg.dev/stical-web-dev-409409/stical-docker/eureka-server:latest --dry-run=client -o yaml
 #+END_SRC
 
 #+BEGIN_SRC 
@@ -1595,7 +1595,7 @@ gcloud compute addresses describe eureka-server-ip --region us-central1
 To fix the image pull back off problem from artifact registry:
 
 #+BEGIN_SRC 
-gcloud artifacts repositories add-iam-policy-binding stridecal-docker \
+gcloud artifacts repositories add-iam-policy-binding stical-docker \
   --location=asia-southeast1 \
   --member=serviceAccount:<NNNN-my-account-number-in-digits>-compute@developer.gserviceaccount.com \
   --role="roles/artifactregistry.reader"
@@ -1670,8 +1670,8 @@ Sample generated:
 
 #+BEGIN_SRC 
 c = get_config()
-c.NotebookApp.certfile = u'/usr/share/ssl/stridecal.crt'
-c.NotebookApp.keyfile = u'/usr/share/ssl/stridecal.key'
+c.NotebookApp.certfile = u'/usr/share/ssl/stical.crt'
+c.NotebookApp.keyfile = u'/usr/share/ssl/stical.key'
 c.NotebookApp.ip = '0.0.0.0'
 c.NotebookApp.open_browser = False
 c.NotebookApp.password = '<hash>'
@@ -1718,14 +1718,14 @@ GRANT ALL ON SCHEMA public TO "postgres";
 * docker build an image for a specific platform 
 
 #+BEGIN_SRC 
-docker buildx build --platform linux/amd64  -t us-docker.pkg.dev/stridecal-web-dev/stridecal-docker/config-server:latest .
+docker buildx build --platform linux/amd64  -t us-docker.pkg.dev/stical-web-dev/stical-docker/config-server:latest .
 #+END_SRC
 
 * Build lambda function with docker image
 
 #+BEGIN_SRC 
 mvn compile dependency:copy-dependencies -DincludeScope=runtime -f pom.xml
-docker buildx build --platform linux/amd64 -t 197991497670.dkr.ecr.ap-southeast-1.amazonaws.com/stridecal-smtp:latest .
+docker buildx build --platform linux/amd64 -t 197991497670.dkr.ecr.ap-southeast-1.amazonaws.com/stical-smtp:latest .
 
 #+END_SRC
 
