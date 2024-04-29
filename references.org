@@ -1931,3 +1931,174 @@ helm uninstall aws-load-balancer-controller -n  kube-system
 
 
 #+END_SRC
+
+
+
+** deploying to digital ocean kubernetes
+
+
+
+
+#+BEGIN_SRC 
+doctl auth init
+doctl kubernetes cluster kubeconfig save stical-sit
+kubectl config get-contexts
+kubectl config use-context do-sfo2-stical-sit
+kubectl get nodes
+kubectl config set-context --current --namespace=stical-sit
+#+END_SRC
+
+#+BEGIN_SRC 
+kubectl create secret generic postgres-secret --from-literal=POSTGRES_PASSWORD=safepass --from-literal=POSTGRES_USER=postgres --from-literal=POSTGRES_DB=postgres --namespace stical-sit
+#+END_SRC
+
+*** debugging pod issues
+
+#+BEGIN_SRC 
+kubectl create configmap nginx-config --from-file=./nginx/nginx.conf --from-file=./nginx/ssl/app.stical.com.crt --from-file=./nginx/ssl/app.stical.com.key --namespace stical-sit
+#+END_SRC
+
+#+BEGIN_SRC 
+kubectl -n stical-sit rollout restart deploy stical-backend
+kubectl -n stical-sit rollout restart deploy stical-frontend-react
+#+END_SRC
+
+#+BEGIN_SRC 
+kubectl logs -f -n stical-sit deployment/stical-frontend-react
+kubectl get pods
+kubectl describe pod stical-frontend-react-7f565f57c6-kngrw
+
+#+END_SRC
+
+#+BEGIN_SRC 
+helm -n stical-sit install nginx-ingress ingress-nginx/ingress-nginx --set controller.publishService.enabled=true
+#+END_SRC
+
+#+BEGIN_SRC 
+helm -n stical-sit list
+helm -n stical-sit delete nginx-ingress
+#+END_SRC
+
+#+BEGIN_SRC 
+kubectl --namespace stical-sit get services -o wide -w nginx-ingress-ingress-nginx-controller
+#+END_SRC
+
+#+BEGIN_SRC 
+kubectl config set-context --current --namespace=stical-sit
+#+END_SRC
+
+*** create tls certificate
+
+#+BEGIN_SRC 
+doctl compute certificate create --name jupyter-stical-com-tls --type custom --private-key-path files/nginx/ssl/jupyter.stical.com.key --leaf-certificate-path files/nginx/ssl/jupyter.stical.com.crt --certificate-chain-path files/nginx/ssl/jupyter.stical.com.ca_bundle.crt --dns-names jupyter.stical.com
+doctl compute certificate create --name app-stical-com-tls --type custom --private-key-path files/nginx/ssl/app.stical.com.key --leaf-certificate-path files/nginx/ssl/app.stical.com.crt --certificate-chain-path files/nginx/ssl/app.stical.com.ca_bundle.crt --dns-names app.stical.com
+#+END_SRC
+
+#+BEGIN_SRC 
+kubectl create secret tls jupyter-stical-com-tls \
+    --namespace stical-sit \
+    --key files/nginx/ssl/jupyter.stical.com.key \
+    --cert files/nginx/ssl/jupyter.stical.com.crt
+
+
+kubectl create secret tls app-stical-com-tls \
+    --namespace stical-sit \
+    --key files/nginx/ssl/app.stical.com.key \
+    --cert files/nginx/ssl/app.stical.com.crt
+#+END_SRC
+
+
+*** using load balancer
+
+tbc wasn't redirecting 
+
+#+BEGIN_SRC 
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: stical-frontend-react
+  annotations:
+    service.beta.kubernetes.io/do-loadbalancer-certificate-id: "7b131a12-03ea-451a-932c-90f0debb25e4"
+    service.beta.kubernetes.io/do-loadbalancer-protocol: "https"
+    service.beta.kubernetes.io/do-loadbalancer-tls-ports: "443"
+spec:
+  selector:
+    app: stical-frontend-react
+  ports:
+  - protocol: TCP
+    port: 80
+    name: http
+    targetPort: 80  # Assumes NGINX inside the container is listening on port 80
+  - protocol: TCP
+    port: 443
+    name: https
+    targetPort: 443  # Assumes NGINX inside the container is listening on port 443
+  type: LoadBalancer
+
+#+END_SRC
+
+*** using ingress
+
+An stical Ingress that makes use of the certificate and load balancer created above would look like this:
+
+#+BEGIN_SRC 
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stical-frontend-react-ingress
+  annotations:
+    service.beta.kubernetes.io/do-loadbalancer-redirect-http-to-https: "true"
+    service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol: "true"
+    service.beta.kubernetes.io/do-loadbalancer-certificate-id: "7b131a12-03ea-451a-932c-90f0debb25e4"
+    service.beta.kubernetes.io/do-loadbalancer-protocol: "https"
+    service.beta.kubernetes.io/do-loadbalancer-tls-ports: "443"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "app.stical.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: stical-frontend-react
+            port:
+              number: 443
+
+#+END_SRC
+
+Another ingress using the same certificate from secret (app-stical-com-tls) would look like this:
+
+#+BEGIN_SRC 
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: stical-frontend-react-ingress
+  namespace: stical-sit
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: HTTPS
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    service.beta.kubernetes.io/do-loadbalancer-enable-proxy-protocol: "false"
+    service.beta.kubernetes.io/do-loadbalancer-tls-passthrough: "true"
+    service.beta.kubernetes.io/do-loadbalancer-tls-ports: "443"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - app.stical.com
+    secretName: app-stical-com-tls
+  rules:
+  - host: "app.stical.com"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: stical-frontend-react
+            port:
+              number: 443
+
+#+END_SRC
