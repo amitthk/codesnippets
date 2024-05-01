@@ -2102,3 +2102,22 @@ spec:
               number: 443
 
 #+END_SRC
+
+
+** Resolving the java truststore SSL certificate issue
+
+Download the ssl certificate from destination website
+
+#+BEGIN_SRC
+
+openssl s_client -showcerts -connect app.stical.com:443 </dev/null 2>/dev/null|openssl x509 -outform PEM >stical.crt
+
+#+END_SRC
+
+Add the certificate to the java truststore
+
+#+BEGIN_SRC
+
+keytool -import -alias stical -file stical.crt -keystore ${JAVA_HOME}/lib/security/cacerts
+
+#+END_SRC
