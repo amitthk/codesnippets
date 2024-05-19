@@ -2121,3 +2121,15 @@ Add the certificate to the java truststore
 keytool -import -alias stical -file stical.crt -keystore ${JAVA_HOME}/lib/security/cacerts
 
 #+END_SRC
+
+** spring boot app unable to resolve hostname of service when deployed to kubernetes
+
+Add the following to the deployment.yaml file
+
+#+BEGIN_SRC
+eureka:
+  instance:
+    prefer-ip-address: true
+    hostname: {spring.application.name}
+
+#+END_SRC
