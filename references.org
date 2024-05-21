@@ -2133,3 +2133,16 @@ eureka:
     hostname: {spring.application.name}
 
 #+END_SRC
+
+** spring boot fix manifest not found
+
+#+BEGIN_SRC 
+<build>
+  <plugins>
+    <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+    </plugin>
+  </plugins>
+</build>
+#+END_SRC
