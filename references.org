@@ -2146,3 +2146,86 @@ eureka:
   </plugins>
 </build>
 #+END_SRC
+
+
+** pandas pivot table and chart on excel sheets
+
+#+BEGIN_SRC 
+
+import pandas as pd
+import sqlite3
+import matplotlib.pyplot as plt
+
+# Function to strip substrings from URLs
+def strip_substring(url, substrings):
+    for substring in substrings:
+        url = url.replace(substring, '')
+    return url
+
+# Substrings to strip
+substrings_to_strip = ['substring1', 'substring2']  # Replace with actual substrings
+
+# Read the Excel file and the specific sheets
+df1 = pd.read_excel('path_to_your_excel_file.xlsx', sheet_name='Sheet1')
+df2 = pd.read_excel('path_to_your_excel_file.xlsx', sheet_name='Sheet2')
+df3 = pd.read_excel('path_to_your_excel_file.xlsx', sheet_name='Sheet3')
+
+# Strip substrings from the joburl columns
+df1['joburl'] = df1['joburl'].apply(strip_substring, substrings=substrings_to_strip)
+df2['joburl'] = df2['joburl'].apply(strip_substring, substrings=substrings_to_strip)
+df3['joburl'] = df3['joburl'].apply(strip_substring, substrings=substrings_to_strip)
+
+# Perform inner join between the DataFrames
+df_merged_1 = pd.merge(df1, df2, on='joburl', how='inner')
+df_merged_final = pd.merge(df_merged_1, df3, on='joburl', how='inner')
+
+# Show counts of non-null values
+non_null_counts = df_merged_final.notnull().sum()
+print(non_null_counts)
+
+# Create the pivot table
+pivot_table = pd.pivot_table(df_merged_final, 
+                             values='agg_column', 
+                             index=['pivot_column1'], 
+                             columns=['pivot_column2'], 
+                             aggfunc='count')  # Using 'count' to show counts
+
+# Display the pivot table
+print(pivot_table)
+
+# Plot the pivot table as a chart
+pivot_table.plot(kind='bar', stacked=True)
+plt.title('Pivot Chart')
+plt.xlabel('Pivot Column 1')
+plt.ylabel('Count')
+plt.legend(title='Pivot Column 2')
+plt.show()
+
+# Connect to the SQLite database (it will create the database file if it doesn't exist)
+conn = sqlite3.connect('final_dataset.db')
+
+# Write the DataFrame to the SQLite database
+df_merged_final.to_sql('final_table', conn, if_exists='replace', index=False)
+
+# Commit and close the connection
+conn.commit()
+conn.close()
+
+# Reconnect to the SQLite database
+conn = sqlite3.connect('final_dataset.db')
+
+# List all tables in the database
+tables = pd.read_sql_query("SELECT name FROM sqlite_master WHERE type='table';", conn)
+print(tables)
+
+# Query the data from the table
+query = "SELECT * FROM final_table LIMIT 10;"  # Modify the query as needed
+result = pd.read_sql_query(query, conn)
+
+# Display the result
+print(result)
+
+# Close the connection
+conn.close()
+
+#+END_SRC
