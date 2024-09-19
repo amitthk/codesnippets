@@ -58,9 +58,40 @@ es = Elasticsearch(
     api_key=API_KEY
 )
 
+# Disable warnings from urllib
 urllib3.disable_warnings()
 
-# Function definitions and script logic remains the same
+# Function to fetch all records from Elasticsearch
+def fetch_all_records(index_name, fields):
+    all_records = []
+    scroll_id = None
+    total_records = 0
+    
+    # Initial search query
+    response = es.search(
+        index=index_name,
+        body={
+            "_source": fields,
+            "query": {"match_all": {}}
+        },
+        size=BATCH_SIZE,
+        scroll='20m'  # Keep the scroll context alive for 20 minutes
+    )
+    
+    # Collect the initial batch
+    all_records.extend(response['hits']['hits'])
+    total_records += len(response['hits']['hits'])
+    scroll_id = response['_scroll_id']
+    
+    # Keep scrolling until no more records are found
+    while len(response['hits']['hits']) > 0 and total_records < TOTAL_RECORDS_TO_FETCH:
+        response = es.scroll(scroll_id=scroll_id, scroll='20m')
+        all_records.extend(response['hits']['hits'])
+        total_records += len(response['hits']['hits'])
+        scroll_id = response['_scroll_id']
+    
+    print(f'Total records fetched: {total_records}')
+    return all_records
 
 # Fetch records
 records = fetch_all_records(INDEX_NAME, FIELDS)
