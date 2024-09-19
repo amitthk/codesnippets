@@ -1,0 +1,105 @@
+* Useful data engg snippets
+
+** Ingest from Elasticsearch to S3 parquet dataset
+
+Dockerfile
+
+#+BEGIN_SRC 
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim
+
+# Set the working directory in the container
+WORKDIR /usr/src/app
+
+# Install any needed packages specified in requirements.txt
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the script into the container
+COPY ingest_script.py .
+
+# Run the script when the container launches
+CMD ["python", "./ingest_script.py"]
+#+END_SRC
+
+requirements.txt
+
+#+BEGIN_SRC 
+elasticsearch
+pandas
+requests
+urllib3
+awswrangler
+#+END_SRC
+
+ingest_script.py
+
+#+BEGIN_SRC 
+import os
+from elasticsearch import Elasticsearch, helpers
+import pandas as pd
+import requests
+import urllib3
+from awswrangler import s3
+
+# Configuration from environment variables
+ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL')
+INDEX_NAME = os.getenv('INDEX_NAME', 'jenkins-ci-builds-*')
+FIELDS = os.getenv('FIELDS', 'JOBURL,pipeline_type,APPID,app-repo,SERVICE').split(',')
+BATCH_SIZE = int(os.getenv('BATCH_SIZE', '10000'))
+API_KEY = os.getenv('API_KEY')
+TOTAL_RECORDS_TO_FETCH = int(os.getenv('TOTAL_RECORDS_TO_FETCH', '13271464'))
+S3_BUCKET_PATH = os.getenv('S3_BUCKET_PATH')
+
+# Elasticsearch client setup
+es = Elasticsearch(
+    [ELASTICSEARCH_URL],
+    verify_certs=False,
+    api_key=API_KEY
+)
+
+urllib3.disable_warnings()
+
+# Function definitions and script logic remains the same
+
+# Fetch records
+records = fetch_all_records(INDEX_NAME, FIELDS)
+
+# Convert list of Elasticsearch docs to DataFrame
+df = pd.DataFrame([doc['_source'] for doc in records])
+
+# Save to Parquet file in S3 bucket
+s3.to_parquet(
+    df,
+    path=S3_BUCKET_PATH,
+    dataset=True,
+    mode='overwrite'
+)
+#+END_SRC
+
+cron-job.yaml
+
+#+BEGIN_SRC 
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: data-ingestion-job
+spec:
+  schedule: "0 0 * * *"  # Runs at midnight every day
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: data-ingestion
+            image: yourusername/data-ingestion:latest
+            env:
+              - name: ELASTICSEARCH_URL
+                value: "https://myelastichost.stical.com:9200"
+              - name: API_KEY
+                value: "your-api-key"
+              - name: S3_BUCKET_PATH
+                value: "s3://mybucket/mydata/"
+            # Set other environment variables as needed
+          restartPolicy: OnFailure
+#+END_SRC
