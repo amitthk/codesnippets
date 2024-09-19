@@ -48,7 +48,7 @@ INDEX_NAME = os.getenv('INDEX_NAME', 'jenkins-ci-builds-*')
 FIELDS = os.getenv('FIELDS', 'JOBURL,pipeline_type,APPID,app-repo,SERVICE').split(',')
 BATCH_SIZE = int(os.getenv('BATCH_SIZE', '10000'))
 API_KEY = os.getenv('API_KEY')
-TOTAL_RECORDS_TO_FETCH = int(os.getenv('TOTAL_RECORDS_TO_FETCH', '13271464'))
+TOTAL_RECORDS_TO_FETCH = int(os.getenv('TOTAL_RECORDS_TO_FETCH', '13000000'))
 S3_BUCKET_PATH = os.getenv('S3_BUCKET_PATH')
 
 # Elasticsearch client setup
