@@ -1940,6 +1940,7 @@ helm uninstall aws-load-balancer-controller -n  kube-system
 
 
 #+BEGIN_SRC 
+doctl auth remove
 doctl auth init
 doctl kubernetes cluster kubeconfig save stical-sit
 kubectl config get-contexts
