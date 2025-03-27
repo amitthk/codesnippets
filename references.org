@@ -74,6 +74,11 @@ cp /etc/apache2/sites-enabled/000-default.conf ~/000-default.conf.bak1
 
 rsync ~/000-default.conf.bak1 -rtvpl administrator@192.168.0.109:/Users/administrator/Documents/src
 
+** selectively copy a file to sub directories only if does not exist
+
+#+BEGIN_SRC
+ls -l | grep "^d" | awk '{print "[ ! -f \"" $9 "/.gitignore\" ] && cp ./common-service/.gitignore " $9 "/.gitignore"}' | bash
+#+END_SRC
 
 #+END_SRC
 
