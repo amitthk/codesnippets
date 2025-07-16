@@ -2235,3 +2235,75 @@ print(result)
 conn.close()
 
 #+END_SRC
+
+** Installing postgresql-16 with data in /opt/apps/postgresql
+
+#+BEGIN_SRC
+#!/bin/bash
+
+set -e
+
+DATA_DIR="/opt/apps/postgresql"
+PG_VERSION="16"
+
+# Detect OS
+if [ -f /etc/os-release ]; then
+  . /etc/os-release
+  OS=$ID
+else
+  echo "Cannot detect operating system."
+  exit 1
+fi
+
+echo "Installing PostgreSQL $PG_VERSION on $OS..."
+
+# Create the data directory
+sudo mkdir -p "$DATA_DIR"
+sudo chown -R postgres:postgres "$DATA_DIR"
+
+if [[ "$OS" == "ol" || "$OS" == "rhel" || "$OS" == "centos" ]]; then
+  # Oracle Linux or RHEL
+  sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-$(rpm -E %{rhel})-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+  sudo dnf -qy module disable postgresql
+  sudo dnf install -y postgresql16-server
+
+  echo "Initializing PostgreSQL database in $DATA_DIR..."
+  sudo -u postgres /usr/pgsql-$PG_VERSION/bin/initdb -D "$DATA_DIR"
+
+  echo "🛠️ Enabling and starting PostgreSQL service..."
+  sudo cp /usr/lib/systemd/system/postgresql-16.service /etc/systemd/system/
+  sudo sed -i "s|^Environment=PGDATA=.*|Environment=PGDATA=$DATA_DIR|" /etc/systemd/system/postgresql-16.service
+  sudo systemctl daemon-reexec
+  sudo systemctl enable postgresql-16
+  sudo systemctl start postgresql-16
+
+elif [[ "$OS" == "debian" || "$OS" == "ubuntu" ]]; then
+  # Debian/Ubuntu
+  echo "Adding PostgreSQL APT repo..."
+  sudo apt-get install -y curl gnupg2
+  curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /usr/share/keyrings/postgresql.gpg
+  echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME:-$(lsb_release -cs)}-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+
+  sudo apt-get update
+  sudo apt-get install -y postgresql-$PG_VERSION
+
+  echo "Stopping PostgreSQL and setting up data directory..."
+  sudo systemctl stop postgresql
+  sudo -u postgres /usr/lib/postgresql/$PG_VERSION/bin/initdb -D "$DATA_DIR"
+
+  echo "🛠️ Updating systemd to use custom data directory..."
+  SERVICE_FILE="/etc/systemd/system/postgresql@$PG_VERSION-main.service"
+  sudo cp /lib/systemd/system/postgresql@$PG_VERSION-main.service $SERVICE_FILE
+  sudo sed -i "s|^ExecStart=.*|ExecStart=/usr/lib/postgresql/$PG_VERSION/bin/postgres -D $DATA_DIR|" $SERVICE_FILE
+  sudo systemctl daemon-reload
+  sudo systemctl enable postgresql@$PG_VERSION-main
+  sudo systemctl start postgresql@$PG_VERSION-main
+
+else
+  echo "Unsupported OS: $OS"
+  exit 1
+fi
+
+echo "PostgreSQL $PG_VERSION installed and running with data at $DATA_DIR."
+
+#+END_SRC
