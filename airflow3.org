@@ -1,0 +1,210 @@
+* Installing Apache Airflow 3 Natively on VMs (No Docker or Kubernetes)
+
+Talking about AI, less than 1% of enterprise data is inside large language models. To build pursposeful AI-powered tools that truly matter to an organization, we need access to real, operational data.
+
+Apache Airflow works as a Swiss army knife for data engineers. It helps orchestrate data pipelines that reliably move data across systems and into your data lake, making that data available for machine learning, analytics, and business workflows.
+
+Most online examples for Airflow setup focus on Docker or Kubernetes. Those work well in cloud-native setups. But what if you can’t—or don’t want to—use Docker? Maybe your infrastructure team restricts containers due to security guidelines. Or maybe you're deploying to lightweight VMs where Docker and K8s just add more operational baggage.
+
+This guide walks through installing **Apache Airflow 3** directly on VMs. No containers. Just the native system tools and services, with full control. It also introduces key changes in Airflow 3’s architecture—such as its shift to modular services and separation of providers from the core engine.
+
+Let’s get started.
+
+---
+
+** 1. Detecting the Operating System
+
+To handle different Linux distros like Debian, Ubuntu, Fedora, or RHEL-based systems, the script starts with OS detection:
+
+#+BEGIN_SRC
+detect_os() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        OS=$ID
+        OS_VERSION=$VERSION_ID
+        * Set codename for Debian-based distros
+    else
+        error "Cannot detect operating system."
+    fi
+    log "Detected OS: $OS ${VERSION_CODENAME:+($VERSION_CODENAME)} ${OS_VERSION:+v$OS_VERSION}"
+}
+#+END_SRC
+
+This ensures the rest of the script installs packages and sets up services tailored to the detected distro.
+
+---
+
+** 2. Creating Directories and Users
+
+We prepare custom install paths and dedicated users for Airflow and PostgreSQL:
+
+#+BEGIN_SRC
+sudo mkdir -p "$POSTGRES_DIR" "$AIRFLOW_DIR" "$PYTHON_DIR" "$VENV_DIR"
+sudo useradd -r -s /bin/bash -d "$AIRFLOW_DIR" -G postgres airflow
+sudo chown -R airflow:airflow "$AIRFLOW_DIR"
+#+END_SRC
+
+This keeps system files separate from your application stack and ensures secure user access boundaries.
+
+---
+
+** 3. Installing System Dependencies
+
+Based on the OS detected, the script installs libraries required for Python compilation, PostgreSQL, and Airflow:
+
+#+BEGIN_SRC
+sudo apt-get install -y \
+  build-essential libssl-dev libffi-dev \
+  libreadline-dev libsqlite3-dev libbz2-dev \
+  libsystemd-dev python3-dev libkrb5-dev libpq-dev
+#+END_SRC
+
+This includes PostgreSQL dev headers (`libpq-dev`), Kerberos support (`libkrb5-dev`), and compression, SSL, and systemd support.
+
+---
+
+** 4. Installing PostgreSQL in a Custom Directory
+
+Rather than relying on the system default data directory, PostgreSQL is installed under `/opt/apps/postgres`:
+
+#+BEGIN_SRC
+sudo -u postgres ${PG_BIN}/initdb -D "$POSTGRES_DIR" --encoding=UTF8 --locale=C
+#+END_SRC
+
+The script also sets up a custom systemd service so PostgreSQL starts automatically:
+
+#+BEGIN_SRC
+[Service]
+ExecStart=${PG_BIN}/postgres -D ${POSTGRES_DIR}
+#+END_SRC
+
+This makes the installation portable and avoids conflicts with existing database setups.
+
+---
+
+** 5. Creating the Airflow Database and User
+
+The script then creates the Airflow DB user and schema:
+
+#+BEGIN_SRC
+sudo -u postgres ${PG_BIN}/psql -c "CREATE ROLE airflow WITH LOGIN PASSWORD 'airflow_secure_password';"
+sudo -u postgres ${PG_BIN}/psql -c "CREATE DATABASE airflow OWNER airflow;"
+#+END_SRC
+
+Airflow needs a dedicated schema and user to manage its metadata and job history cleanly.
+
+---
+
+** 6. Installing Python 3.11 from Source
+
+Airflow 3 requires Python 3.11+, which is built from source to avoid relying on system package versions:
+
+#+BEGIN_SRC
+./configure --prefix=$PYTHON_DIR --enable-optimizations
+make -j$(nproc)
+sudo make install
+#+END_SRC
+
+This ensures compatibility with newer Airflow releases and keeps your system Python untouched.
+
+---
+
+** 7. Setting Up a Virtual Environment for Airflow
+
+A clean Python virtual environment is created and configured for Airflow:
+
+#+BEGIN_SRC
+$PYTHON_DIR/bin/python3.11 -m venv $VENV_DIR
+pip install "apache-airflow==$AIRFLOW_VERSION" --constraint https://.../constraints-3.11.txt
+#+END_SRC
+
+All dependencies, including database connectors and Airflow itself, are installed in this isolated environment.
+
+---
+
+** 8. Generating Airflow Keys
+
+Airflow uses a Fernet key to encrypt secrets in its metadata DB. The script auto-generates it:
+
+#+BEGIN_SRC
+FERNET_KEY=$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')
+SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(32))')
+#+END_SRC
+
+---
+
+** 9. Airflow Configuration
+
+Airflow is configured using environment variables written into `/etc/sysconfig/airflow`:
+
+#+BEGIN_SRC
+AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow_secure_password@localhost:5432/airflow
+AIRFLOW__CORE__EXECUTOR=LocalExecutor
+AIRFLOW__API__SECRET_KEY=$SECRET_KEY
+#+END_SRC
+
+The script also runs:
+
+#+BEGIN_SRC
+airflow db migrate
+#+END_SRC
+
+to initialize the metadata database.
+
+---
+
+** 10. Setting up Airflow Services with systemd
+
+Each Airflow component runs as its own service:
+
+#+BEGIN_SRC
+[Service]
+ExecStart=$VENV_DIR/bin/airflow api-server --host 0.0.0.0 --port 8080
+...
+ExecStart=$VENV_DIR/bin/airflow scheduler
+...
+ExecStart=$VENV_DIR/bin/airflow dag-processor
+#+END_SRC
+
+These services are enabled with:
+
+#+BEGIN_SRC
+sudo systemctl enable airflow-apiserver airflow-scheduler airflow-dag-processor
+#+END_SRC
+
+and started via systemctl.
+
+---
+
+** 11. Verifying Installation
+
+Once everything is up, the script runs tests to ensure services are active:
+
+#+BEGIN_SRC
+sudo systemctl is-active airflow-apiserver
+#+END_SRC
+
+It also runs a Python DB connection test to validate the setup:
+
+#+BEGIN_SRC
+python -c 'from airflow import settings; print("Database connection: OK")'
+#+END_SRC
+
+---
+
+** Wrap-up
+
+This VM-native installation of Apache Airflow 3 avoids the complexity of Docker and Kubernetes. It’s perfect for restricted enterprise environments or anyone who wants tighter control of their deployment. You still get the full power of Airflow’s modular architecture—just in a traditional system admin–friendly setup.
+
+To monitor services:
+
+#+BEGIN_SRC
+sudo journalctl -u airflow-apiserver -f
+sudo journalctl -u airflow-scheduler -f
+#+END_SRC
+
+Airflow UI is available at: **[http://localhost:8080](http://localhost:8080)**
+
+Login with the default user: `admin / admin`
+
+That’s it. You’re now running Airflow 3 directly on your VM—modular, secure, and fully in your hands.
