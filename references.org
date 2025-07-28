@@ -2694,7 +2694,7 @@ Using ssh to tunnel through specific port on a server:
 
 Consider we want to access port 8080 on server2. But server2 is only accessible from temporary bastion1. So we will run this command on the bastion1 to forward to port 8080 as localhost:8888 to fedora-client
 
-fedora-client:8888 -> server1 -> server2:8080
+fedora-client:8888 -> bastion1 -> server2:8080
 
 #+BEGIN_SRC
 ssh -N -R localhost:8888:server2:8080 user@fedora-client1
