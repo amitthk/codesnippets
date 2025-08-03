@@ -1,0 +1,2634 @@
+# 20-Hour Agentic AI Study Roadmap
+*Focus: 20% of skills that drive 80% of results*
+
+## Overview
+The essential skills needed to build and deploy AI agents effectively.
+
+
+## Session 1: Python Fundamentals & API Basics (2 hours)
+**Focus:** Core programming skills for AI agents
+
+### Hour 1: Python Essentials
+```python
+# Essential Python for AI Agents
+import requests
+import json
+import asyncio
+from typing import Dict, List, Optional
+
+# Basic HTTP requests
+def make_api_call(url: str, params: Dict = None) -> Dict:
+    """Basic API call function"""
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        print(f"API call failed: {e}")
+        return {}
+
+# File operations for agents
+def read_config(file_path: str) -> Dict:
+    """Read configuration from JSON file"""
+    with open(file_path, 'r') as f:
+        return json.load(f)
+
+def log_agent_action(action: str, result: str):
+    """Log agent actions"""
+    with open('agent_log.txt', 'a') as f:
+        f.write(f"{action}: {result}\n")
+```
+
+### Hour 2: Async Programming & Error Handling
+```python
+# Async programming for concurrent agent operations
+import asyncio
+import aiohttp
+
+async def async_api_call(session, url: str) -> Dict:
+    """Async API call for better performance"""
+    try:
+        async with session.get(url) as response:
+            return await response.json()
+    except Exception as e:
+        return {"error": str(e)}
+
+async def parallel_agent_tasks():
+    """Run multiple agent tasks concurrently"""
+    async with aiohttp.ClientSession() as session:
+        tasks = [
+            async_api_call(session, "https://api.example1.com"),
+            async_api_call(session, "https://api.example2.com")
+        ]
+        results = await asyncio.gather(*tasks)
+        return results
+
+# Error handling patterns
+class AgentError(Exception):
+    """Custom exception for agent errors"""
+    pass
+
+def robust_agent_function(data):
+    """Agent function with proper error handling"""
+    try:
+        # Process data
+        if not data:
+            raise AgentError("No data provided")
+        return {"status": "success", "result": data}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+```
+
+### 15-min Review Questions:
+1. How do you handle API failures in agent code?
+2. When should you use async programming in agents?
+3. What are the key Python patterns for agent development?
+
+
+## Session 2: LLM APIs & Prompt Engineering (2 hours)
+**Focus:** Working with language models effectively
+
+### Hour 1: OpenAI API Integration
+```python
+import openai
+from typing import List, Dict
+
+class LLMAgent:
+    def __init__(self, api_key: str):
+        self.client = openai.OpenAI(api_key=api_key)
+    
+    def chat_completion(self, messages: List[Dict], model: str = "gpt-4") -> str:
+        """Basic chat completion"""
+        try:
+            response = self.client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=1000
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            return f"Error: {str(e)}"
+    
+    def structured_prompt(self, task: str, context: str) -> str:
+        """Create structured prompt for consistent results"""
+        messages = [
+            {"role": "system", "content": "You are a helpful AI assistant."},
+            {"role": "user", "content": f"Task: {task}\nContext: {context}"}
+        ]
+        return self.chat_completion(messages)
+
+# Example usage
+agent = LLMAgent("your-api-key")
+result = agent.structured_prompt(
+    task="Summarize the key points",
+    context="Long document text here..."
+)
+```
+
+### Hour 2: Advanced Prompting Techniques
+```python
+class AdvancedPrompts:
+    @staticmethod
+    def chain_of_thought_prompt(problem: str) -> str:
+        """Chain of thought prompting for complex reasoning"""
+        return f"""
+Let's think about this step by step:
+
+Problem: {problem}
+
+Step 1: Identify the key components
+Step 2: Analyze relationships
+Step 3: Apply logical reasoning
+Step 4: Draw conclusions
+
+Please work through each step carefully.
+"""
+    
+    @staticmethod
+    def role_based_prompt(role: str, task: str, constraints: str = "") -> List[Dict]:
+        """Create role-based prompts"""
+        system_message = f"You are a {role}. {constraints}"
+        return [
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": task}
+        ]
+    
+    @staticmethod
+    def few_shot_prompt(examples: List[Dict], new_input: str) -> str:
+        """Few-shot learning prompt"""
+        prompt = "Here are some examples:\n\n"
+        for i, example in enumerate(examples, 1):
+            prompt += f"Example {i}:\nInput: {example['input']}\nOutput: {example['output']}\n\n"
+        prompt += f"Now, given this input: {new_input}\nOutput:"
+        return prompt
+
+# Example usage
+examples = [
+    {"input": "Hello", "output": "Greeting detected"},
+    {"input": "Goodbye", "output": "Farewell detected"}
+]
+prompt = AdvancedPrompts.few_shot_prompt(examples, "See you later")
+```
+
+### 15-min Review Questions:
+1. What makes a good system prompt?
+2. How does chain-of-thought improve reasoning?
+3. When should you use few-shot vs zero-shot prompting?
+
+
+## Session 3: Agent Architecture & Decision Making (2 hours)
+**Focus:** Building intelligent agent behavior
+
+### Hour 1: Basic Agent Architecture
+```python
+from abc import ABC, abstractmethod
+from enum import Enum
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+class AgentState(Enum):
+    IDLE = "idle"
+    THINKING = "thinking"
+    ACTING = "acting"
+    COMPLETE = "complete"
+    ERROR = "error"
+
+@dataclass
+class AgentAction:
+    name: str
+    parameters: Dict[str, Any]
+    timestamp: str
+
+class Agent(ABC):
+    def __init__(self, name: str):
+        self.name = name
+        self.state = AgentState.IDLE
+        self.memory = []
+        self.actions_taken = []
+    
+    @abstractmethod
+    def perceive(self, environment: Dict) -> Dict:
+        """Perceive the current environment"""
+        pass
+    
+    @abstractmethod
+    def decide(self, perception: Dict) -> AgentAction:
+        """Decide what action to take"""
+        pass
+    
+    @abstractmethod
+    def act(self, action: AgentAction) -> Dict:
+        """Execute the decided action"""
+        pass
+    
+    def run_cycle(self, environment: Dict) -> Dict:
+        """Main agent loop: perceive -> decide -> act"""
+        try:
+            self.state = AgentState.THINKING
+            perception = self.perceive(environment)
+            
+            action = self.decide(perception)
+            
+            self.state = AgentState.ACTING
+            result = self.act(action)
+            
+            self.actions_taken.append(action)
+            self.state = AgentState.COMPLETE
+            
+            return result
+        except Exception as e:
+            self.state = AgentState.ERROR
+            return {"error": str(e)}
+
+class SimpleTaskAgent(Agent):
+    def __init__(self, name: str, llm_client):
+        super().__init__(name)
+        self.llm = llm_client
+    
+    def perceive(self, environment: Dict) -> Dict:
+        """Extract relevant information from environment"""
+        return {
+            "task": environment.get("task", ""),
+            "available_tools": environment.get("tools", []),
+            "context": environment.get("context", "")
+        }
+    
+    def decide(self, perception: Dict) -> AgentAction:
+        """Use LLM to decide on action"""
+        prompt = f"""
+        Given this situation:
+        Task: {perception['task']}
+        Available tools: {perception['available_tools']}
+        Context: {perception['context']}
+        
+        What action should I take? Respond with JSON:
+        {{"action": "tool_name", "parameters": {{"key": "value"}}}}
+        """
+        
+        response = self.llm.chat_completion([
+            {"role": "user", "content": prompt}
+        ])
+        
+        # Parse LLM response (simplified)
+        import json
+        try:
+            action_data = json.loads(response)
+            return AgentAction(
+                name=action_data["action"],
+                parameters=action_data["parameters"],
+                timestamp=str(datetime.now())
+            )
+        except:
+            return AgentAction("error", {}, str(datetime.now()))
+```
+
+### Hour 2: ReAct Pattern Implementation
+```python
+class ReActAgent(Agent):
+    """Reasoning and Acting agent following ReAct pattern"""
+    
+    def __init__(self, name: str, llm_client, tools: Dict):
+        super().__init__(name)
+        self.llm = llm_client
+        self.tools = tools
+        self.thought_history = []
+    
+    def think(self, observation: str) -> str:
+        """Generate reasoning about current situation"""
+        prompt = f"""
+        You are solving a task step by step.
+        
+        Previous thoughts: {self.thought_history[-3:] if self.thought_history else "None"}
+        Current observation: {observation}
+        
+        Think: What should I reason about this observation?
+        """
+        
+        thought = self.llm.chat_completion([{"role": "user", "content": prompt}])
+        self.thought_history.append(thought)
+        return thought
+    
+    def plan_action(self, thought: str) -> AgentAction:
+        """Plan next action based on reasoning"""
+        available_tools = list(self.tools.keys())
+        
+        prompt = f"""
+        Based on this reasoning: {thought}
+        Available tools: {available_tools}
+        
+        Act: What specific action should I take?
+        Respond with: Action[tool_name(parameter=value)]
+        """
+        
+        action_text = self.llm.chat_completion([{"role": "user", "content": prompt}])
+        
+        # Parse action (simplified)
+        if "Action[" in action_text:
+            # Extract tool and parameters
+            tool_name = "search"  # Simplified parsing
+            parameters = {"query": "example"}
+            return AgentAction(tool_name, parameters, str(datetime.now()))
+        
+        return AgentAction("think", {}, str(datetime.now()))
+    
+    def execute_react_cycle(self, initial_task: str, max_steps: int = 5):
+        """Execute ReAct reasoning cycle"""
+        observation = f"Task: {initial_task}"
+        
+        for step in range(max_steps):
+            # Think
+            thought = self.think(observation)
+            print(f"Think: {thought}")
+            
+            # Act
+            action = self.plan_action(thought)
+            print(f"Act: {action.name}({action.parameters})")
+            
+            # Execute action and get observation
+            if action.name in self.tools:
+                observation = self.tools[action.name](action.parameters)
+            else:
+                observation = "Action not recognized"
+            
+            print(f"Observation: {observation}")
+            
+            # Check if task is complete
+            if "FINAL ANSWER" in observation.upper():
+                break
+        
+        return self.thought_history, self.actions_taken
+
+# Example tools
+def search_tool(params):
+    return f"Search results for: {params.get('query', 'N/A')}"
+
+def calculator_tool(params):
+    try:
+        return str(eval(params.get('expression', '0')))
+    except:
+        return "Calculation error"
+
+# Usage
+tools = {
+    "search": search_tool,
+    "calculator": calculator_tool
+}
+
+agent = ReActAgent("ReAct Agent", llm_client, tools)
+agent.execute_react_cycle("What is 25 * 4 + 10?")
+```
+
+### 15-min Review Questions:
+1. What are the key components of agent architecture?
+2. How does the ReAct pattern improve agent reasoning?
+3. When should you use different agent patterns?
+
+
+## Session 4: Tool Integration & Function Calling (2 hours)
+**Focus:** Connecting agents to external tools and APIs
+
+### Hour 1: OpenAI Function Calling
+```python
+import json
+from typing import List, Dict, Callable
+
+class FunctionCallingAgent:
+    def __init__(self, openai_client):
+        self.client = openai_client
+        self.available_functions = {}
+    
+    def register_function(self, name: str, func: Callable, description: str, parameters: Dict):
+        """Register a function that the agent can call"""
+        self.available_functions[name] = {
+            "function": func,
+            "description": description,
+            "parameters": parameters
+        }
+    
+    def get_function_definitions(self) -> List[Dict]:
+        """Get OpenAI function definitions"""
+        functions = []
+        for name, info in self.available_functions.items():
+            functions.append({
+                "name": name,
+                "description": info["description"],
+                "parameters": info["parameters"]
+            })
+        return functions
+    
+    def execute_with_tools(self, user_message: str) -> str:
+        """Execute agent with function calling capability"""
+        messages = [{"role": "user", "content": user_message}]
+        
+        response = self.client.chat.completions.create(
+            model="gpt-4",
+            messages=messages,
+            functions=self.get_function_definitions(),
+            function_call="auto"
+        )
+        
+        message = response.choices[0].message
+        
+        if message.function_call:
+            # Execute the function
+            function_name = message.function_call.name
+            function_args = json.loads(message.function_call.arguments)
+            
+            if function_name in self.available_functions:
+                function_result = self.available_functions[function_name]["function"](**function_args)
+                
+                # Add function result to conversation
+                messages.append({
+                    "role": "function",
+                    "name": function_name,
+                    "content": str(function_result)
+                })
+                
+                # Get final response
+                final_response = self.client.chat.completions.create(
+                    model="gpt-4",
+                    messages=messages
+                )
+                
+                return final_response.choices[0].message.content
+        
+        return message.content
+
+# Example functions to register
+def get_weather(location: str) -> str:
+    """Mock weather function"""
+    return f"The weather in {location} is sunny, 72°F"
+
+def calculate(expression: str) -> float:
+    """Safe calculator function"""
+    try:
+        # In production, use a safe evaluator
+        result = eval(expression)
+        return result
+    except:
+        return "Calculation error"
+
+def search_web(query: str) -> str:
+    """Mock web search function"""
+    return f"Search results for '{query}': Found 10 relevant articles"
+
+# Register functions
+agent = FunctionCallingAgent(openai_client)
+
+agent.register_function(
+    name="get_weather",
+    func=get_weather,
+    description="Get current weather for a location",
+    parameters={
+        "type": "object",
+        "properties": {
+            "location": {"type": "string", "description": "City name"}
+        },
+        "required": ["location"]
+    }
+)
+
+agent.register_function(
+    name="calculate",
+    func=calculate,
+    description="Perform mathematical calculations",
+    parameters={
+        "type": "object",
+        "properties": {
+            "expression": {"type": "string", "description": "Mathematical expression"}
+        },
+        "required": ["expression"]
+    }
+)
+```
+
+### Hour 2: Custom Tool System
+```python
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
+import inspect
+
+class Tool(ABC):
+    """Base class for agent tools"""
+    
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+    
+    @property
+    @abstractmethod
+    def description(self) -> str:
+        pass
+    
+    @abstractmethod
+    def execute(self, **kwargs) -> Any:
+        pass
+    
+    def get_parameters(self) -> Dict:
+        """Extract parameters from execute method signature"""
+        sig = inspect.signature(self.execute)
+        parameters = {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
+        
+        for param_name, param in sig.parameters.items():
+            if param_name != 'self':
+                param_info = {"type": "string"}  # Default type
+                if param.annotation != inspect.Parameter.empty:
+                    if param.annotation == int:
+                        param_info["type"] = "integer"
+                    elif param.annotation == float:
+                        param_info["type"] = "number"
+                    elif param.annotation == bool:
+                        param_info["type"] = "boolean"
+                
+                parameters["properties"][param_name] = param_info
+                
+                if param.default == inspect.Parameter.empty:
+                    parameters["required"].append(param_name)
+        
+        return parameters
+
+class WebSearchTool(Tool):
+    @property
+    def name(self) -> str:
+        return "web_search"
+    
+    @property
+    def description(self) -> str:
+        return "Search the web for information"
+    
+    def execute(self, query: str, max_results: int = 5) -> str:
+        # Mock implementation
+        return f"Found {max_results} results for '{query}'"
+
+class FileReaderTool(Tool):
+    @property
+    def name(self) -> str:
+        return "read_file"
+    
+    @property
+    def description(self) -> str:
+        return "Read contents of a file"
+    
+    def execute(self, file_path: str) -> str:
+        try:
+            with open(file_path, 'r') as f:
+                return f.read()
+        except Exception as e:
+            return f"Error reading file: {str(e)}"
+
+class EmailTool(Tool):
+    @property
+    def name(self) -> str:
+        return "send_email"
+    
+    @property
+    def description(self) -> str:
+        return "Send an email"
+    
+    def execute(self, to: str, subject: str, body: str) -> str:
+        # Mock implementation
+        return f"Email sent to {to} with subject '{subject}'"
+
+class ToolManager:
+    def __init__(self):
+        self.tools: Dict[str, Tool] = {}
+    
+    def register_tool(self, tool: Tool):
+        """Register a tool"""
+        self.tools[tool.name] = tool
+    
+    def get_tool_definitions(self) -> List[Dict]:
+        """Get all tool definitions for LLM"""
+        definitions = []
+        for tool in self.tools.values():
+            definitions.append({
+                "name": tool.name,
+                "description": tool.description,
+                "parameters": tool.get_parameters()
+            })
+        return definitions
+    
+    def execute_tool(self, tool_name: str, **kwargs) -> Any:
+        """Execute a tool by name"""
+        if tool_name in self.tools:
+            return self.tools[tool_name].execute(**kwargs)
+        else:
+            raise ValueError(f"Tool {tool_name} not found")
+
+# Usage example
+tool_manager = ToolManager()
+tool_manager.register_tool(WebSearchTool())
+tool_manager.register_tool(FileReaderTool())
+tool_manager.register_tool(EmailTool())
+
+# Integration with agent
+class ToolEnabledAgent:
+    def __init__(self, llm_client, tool_manager: ToolManager):
+        self.llm = llm_client
+        self.tool_manager = tool_manager
+    
+    def process_request(self, user_input: str) -> str:
+        """Process user request with tool access"""
+        tools = self.tool_manager.get_tool_definitions()
+        
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant with access to tools."},
+            {"role": "user", "content": user_input}
+        ]
+        
+        response = self.llm.chat.completions.create(
+            model="gpt-4",
+            messages=messages,
+            functions=tools,
+            function_call="auto"
+        )
+        
+        message = response.choices[0].message
+        
+        if message.function_call:
+            tool_name = message.function_call.name
+            tool_args = json.loads(message.function_call.arguments)
+            
+            try:
+                result = self.tool_manager.execute_tool(tool_name, **tool_args)
+                return f"Tool executed: {result}"
+            except Exception as e:
+                return f"Tool execution failed: {str(e)}"
+        
+        return message.content
+```
+
+### 15-min Review Questions:
+1. How does function calling improve agent capabilities?
+2. What are the best practices for tool parameter definition?
+3. How do you handle tool execution errors gracefully?
+
+
+## Session 5: LangChain Framework Fundamentals (2 hours)
+**Focus:** Using LangChain for rapid agent development
+
+### Hour 1: LangChain Basics & Chains
+```python
+from langchain.llms import OpenAI
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain, SimpleSequentialChain
+from langchain.agents import Tool, AgentExecutor, create_react_agent
+from langchain.memory import ConversationBufferMemory
+
+# Basic LangChain setup
+class LangChainAgent:
+    def __init__(self, openai_api_key: str):
+        self.llm = OpenAI(openai_api_key=openai_api_key, temperature=0.7)
+        self.memory = ConversationBufferMemory()
+    
+    def create_simple_chain(self):
+        """Create a simple LLM chain"""
+        template = """
+        You are a helpful assistant. Please answer the following question:
+        Question: {question}
+        Answer:"""
+        
+        prompt = PromptTemplate(
+            input_variables=["question"],
+            template=template
+        )
+        
+        return LLMChain(llm=self.llm, prompt=prompt)
+    
+    def create_sequential_chain(self):
+        """Create a sequential chain for multi-step processing"""
+        # First chain: Generate summary
+        summary_template = """
+        Summarize the following text in one sentence:
+        Text: {text}
+        Summary:"""
+        
+        summary_prompt = PromptTemplate(
+            input_variables=["text"],
+            template=summary_template
+        )
+        summary_chain = LLMChain(llm=self.llm, prompt=summary_prompt)
+        
+        # Second chain: Generate action items
+        action_template = """
+        Based on this summary, generate 3 action items:
+        Summary: {summary}
+        Action Items:"""
+        
+        action_prompt = PromptTemplate(
+            input_variables=["summary"],
+            template=action_template
+        )
+        action_chain = LLMChain(llm=self.llm, prompt=action_prompt)
+        
+        # Combine chains
+        return SimpleSequentialChain(
+            chains=[summary_chain, action_chain],
+            verbose=True
+        )
+
+# Example usage
+agent = LangChainAgent("your-api-key")
+
+# Simple chain
+simple_chain = agent.create_simple_chain()
+result = simple_chain.run("What is machine learning?")
+
+# Sequential chain
+sequential_chain = agent.create_sequential_chain()
+long_text = "Long document text here..."
+action_items = sequential_chain.run(long_text)
+```
+
+### Hour 2: LangChain Agents & Tools
+```python
+from langchain.agents import Tool, AgentExecutor, create_react_agent
+from langchain.prompts import PromptTemplate
+from langchain import hub
+import requests
+
+class LangChainToolAgent:
+    def __init__(self, llm):
+        self.llm = llm
+        self.tools = self._create_tools()
+    
+    def _create_tools(self) -> List[Tool]:
+        """Create tools for the agent"""
+        
+        def search_tool(query: str) -> str:
+            """Search for information"""
+            # Mock search - replace with real API
+            return f"Search results for '{query}': Found relevant information about {query}"
+        
+        def calculator_tool(expression: str) -> str:
+            """Calculate mathematical expressions"""
+            try:
+                result = eval(expression)  # Use safe evaluator in production
+                return f"The result is: {result}"
+            except Exception as e:
+                return f"Calculation error: {str(e)}"
+        
+        def weather_tool(location: str) -> str:
+            """Get weather information"""
+            # Mock weather API
+            return f"Weather in {location}: Sunny, 72°F"
+        
+        def file_reader_tool(filename: str) -> str:
+            """Read file contents"""
+            try:
+                with open(filename, 'r') as f:
+                    content = f.read()[:500]  # Limit content
+                return f"File content: {content}"
+            except Exception as e:
+                return f"Error reading file: {str(e)}"
+        
+        return [
+            Tool(
+                name="Search",
+                func=search_tool,
+                description="Search for information on the web"
+            ),
+            Tool(
+                name="Calculator",
+                func=calculator_tool,
+                description="Calculate mathematical expressions"
+            ),
+            Tool(
+                name="Weather",
+                func=weather_tool,
+                description="Get current weather for a location"
+            ),
+            Tool(
+                name="FileReader",
+                func=file_reader_tool,
+                description="Read contents of a file"
+            )
+        ]
+    
+    def create_react_agent(self):
+        """Create a ReAct agent with tools"""
+        # Get ReAct prompt from hub
+        prompt = hub.pull("hwchase17/react")
+        
+        # Create agent
+        agent = create_react_agent(self.llm, self.tools, prompt)
+        
+        # Create executor
+        agent_executor = AgentExecutor(
+            agent=agent,
+            tools=self.tools,
+            verbose=True,
+            max_iterations=5
+        )
+        
+        return agent_executor
+    
+    def run_agent(self, query: str) -> str:
+        """Run the agent with a query"""
+        agent_executor = self.create_react_agent()
+        
+        try:
+            result = agent_executor.invoke({"input": query})
+            return result["output"]
+        except Exception as e:
+            return f"Agent execution error: {str(e)}"
+
+# Custom prompt template for specialized agent
+class CustomAgentPrompt:
+    @staticmethod
+    def create_research_agent_prompt():
+        """Create a prompt for a research agent"""
+        template = """
+        You are a research assistant agent. Your job is to help users find and analyze information.
+        
+        You have access to the following tools:
+        {tools}
+        
+        Use the following format:
+        
+        Question: the input question you must answer
+        Thought: you should always think about what to do
+        Action: the action to take, should be one of [{tool_names}]
+        Action Input: the input to the action
+        Observation: the result of the action
+        ... (this Thought/Action/Action Input/Observation can repeat N times)
+        Thought: I now know the final answer
+        Final Answer: the final answer to the original input question
+        
+        Begin!
+        
+        Question: {input}
+        Thought: {agent_scratchpad}
+        """
+        
+        return PromptTemplate(
+            template=template,
+            input_variables=["input", "agent_scratchpad", "tools", "tool_names"]
+        )
+
+# Memory-enabled agent
+class MemoryAgent:
+    def __init__(self, llm, tools):
+        self.llm = llm
+        self.tools = tools
+        self.memory = ConversationBufferMemory(
+            memory_key="chat_history",
+            return_messages=True
+        )
+    
+    def create_conversational_agent(self):
+        """Create agent with conversation memory"""
+        from langchain.agents import ConversationalChatAgent, AgentExecutor
+        
+        agent = ConversationalChatAgent.from_llm_and_tools(
+            llm=self.llm,
+            tools=self.tools,
+            verbose=True
+        )
+        
+        return AgentExecutor.from_agent_and_tools(
+            agent=agent,
+            tools=self.tools,
+            memory=self.memory,
+            verbose=True
+        )
+    
+    def chat(self, message: str) -> str:
+        """Have a conversation with the agent"""
+        agent_executor = self.create_conversational_agent()
+        return agent_executor.run(input=message)
+
+# Usage examples
+llm = OpenAI(temperature=0)
+tool_agent = LangChainToolAgent(llm)
+
+# Run simple query
+result = tool_agent.run_agent("What's 25 * 4 + 10, and what's the weather like in Paris?")
+print(result)
+
+# Memory agent example
+memory_agent = MemoryAgent(llm, tool_agent.tools)
+response1 = memory_agent.chat("My name is John and I live in New York")
+response2 = memory_agent.chat("What's the weather like where I live?")
+```
+
+### 15-min Review Questions:
+1. What are the advantages of using LangChain over custom implementations?
+2. How do chains differ from agents in LangChain?
+3. When should you use memory in your agents?
+
+
+# Complete 20-Hour Agentic AI Study Roadmap (Sessions 6-10)
+
+## Session 6: RAG Implementation & Knowledge Management (2 hours)
+**Focus:** Building agents that can access and use external knowledge
+
+### Hour 1: Basic RAG Setup
+```python
+from langchain.document_loaders import TextLoader, DirectoryLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
+from langchain.chains import RetrievalQA
+from langchain.llms import OpenAI
+import os
+
+class RAGAgent:
+    def __init__(self, openai_api_key: str, knowledge_base_path: str):
+        self.api_key = openai_api_key
+        self.llm = OpenAI(openai_api_key=openai_api_key, temperature=0)
+        self.embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+        self.knowledge_base_path = knowledge_base_path
+        self.vectorstore = None
+        self.qa_chain = None
+    
+    def load_documents(self):
+        """Load documents from knowledge base"""
+        if os.path.isfile(self.knowledge_base_path):
+            loader = TextLoader(self.knowledge_base_path)
+        else:
+            loader = DirectoryLoader(
+                self.knowledge_base_path,
+                glob="**/*.txt",
+                loader_cls=TextLoader
+            )
+        
+        documents = loader.load()
+        return documents
+    
+    def split_documents(self, documents):
+        """Split documents into chunks"""
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            separators=["\n\n", "\n", " ", ""]
+        )
+        
+        splits = text_splitter.split_documents(documents)
+        return splits
+    
+    def create_vectorstore(self, documents):
+        """Create vector store from documents"""
+        splits = self.split_documents(documents)
+        
+        self.vectorstore = Chroma.from_documents(
+            documents=splits,
+            embedding=self.embeddings,
+            persist_directory="./chroma_db"
+        )
+        
+        return self.vectorstore
+    
+    def setup_qa_chain(self):
+        """Setup QA chain with retrieval"""
+        if not self.vectorstore:
+            documents = self.load_documents()
+            self.create_vectorstore(documents)
+        
+        self.qa_chain = RetrievalQA.from_chain_type(
+            llm=self.llm,
+            chain_type="stuff",
+            retriever=self.vectorstore.as_retriever(
+                search_type="similarity",
+                search_kwargs={"k": 3}
+            ),
+            return_source_documents=True
+        )
+    
+    def query(self, question: str):
+        """Query the knowledge base"""
+        if not self.qa_chain:
+            self.setup_qa_chain()
+        
+        result = self.qa_chain({"query": question})
+        
+        return {
+            "answer": result["result"],
+            "sources": [doc.page_content[:200] + "..." for doc in result["source_documents"]]
+        }
+
+# Advanced RAG with custom retrieval
+class AdvancedRAGAgent(RAGAgent):
+    def __init__(self, openai_api_key: str, knowledge_base_path: str):
+        super().__init__(openai_api_key, knowledge_base_path)
+        self.retrieval_strategy = "hybrid"
+    
+    def create_hybrid_retriever(self):
+        """Create hybrid retriever combining semantic and keyword search"""
+        from langchain.retrievers import BM25Retriever, EnsembleRetriever
+        
+        documents = self.load_documents()
+        splits = self.split_documents(documents)
+        
+        # Vector retriever
+        vectorstore = self.create_vectorstore(documents)
+        vector_retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+        
+        # Keyword retriever
+        bm25_retriever = BM25Retriever.from_documents(splits)
+        bm25_retriever.k = 3
+        
+        # Ensemble retriever
+        ensemble_retriever = EnsembleRetriever(
+            retrievers=[vector_retriever, bm25_retriever],
+            weights=[0.7, 0.3]
+        )
+        
+        return ensemble_retriever
+    
+    def setup_advanced_qa_chain(self):
+        """Setup QA chain with advanced retrieval"""
+        retriever = self.create_hybrid_retriever()
+        
+        from langchain.chains import ConversationalRetrievalChain
+        from langchain.memory import ConversationBufferMemory
+        
+        memory = ConversationBufferMemory(
+            memory_key="chat_history",
+            return_messages=True
+        )
+        
+        self.qa_chain = ConversationalRetrievalChain.from_llm(
+            llm=self.llm,
+            retriever=retriever,
+            memory=memory,
+            return_source_documents=True
+        )
+
+# Usage example
+rag_agent = RAGAgent("your-api-key", "./knowledge_base/")
+result = rag_agent.query("What is machine learning?")
+print(f"Answer: {result['answer']}")
+print(f"Sources: {result['sources']}")
+```
+
+### Hour 2: Advanced RAG Techniques
+```python
+import chromadb
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import LLMChainExtractor
+from langchain.retrievers.multi_query import MultiQueryRetriever
+from langchain.chains.query_constructor.base import AttributeInfo
+from langchain.retrievers.self_query.base import SelfQueryRetriever
+
+class EnterpriseRAGAgent:
+    def __init__(self, openai_api_key: str):
+        self.api_key = openai_api_key
+        self.llm = OpenAI(openai_api_key=openai_api_key, temperature=0)
+        self.embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+    
+    def setup_contextual_compression(self, base_retriever):
+        """Setup contextual compression for better retrieval"""
+        compressor = LLMChainExtractor.from_llm(self.llm)
+        compression_retriever = ContextualCompressionRetriever(
+            base_compressor=compressor,
+            base_retriever=base_retriever
+        )
+        return compression_retriever
+    
+    def setup_multi_query_retriever(self, vectorstore):
+        """Setup multi-query retriever for better coverage"""
+        base_retriever = vectorstore.as_retriever()
+        multi_query_retriever = MultiQueryRetriever.from_llm(
+            retriever=base_retriever,
+            llm=self.llm
+        )
+        return multi_query_retriever
+    
+    def setup_self_query_retriever(self, vectorstore):
+        """Setup self-query retriever with metadata filtering"""
+        metadata_field_info = [
+            AttributeInfo(
+                name="source",
+                description="The source document",
+                type="string"
+            ),
+            AttributeInfo(
+                name="page",
+                description="The page number",
+                type="integer"
+            )
+        ]
+        
+        document_content_description = "Technical documentation"
+        
+        retriever = SelfQueryRetriever.from_llm(
+            self.llm,
+            vectorstore,
+            document_content_description,
+            metadata_field_info,
+            verbose=True
+        )
+        return retriever
+    
+    def create_rag_chain_with_sources(self, retriever):
+        """Create RAG chain that returns sources and confidence"""
+        from langchain.chains import RetrievalQAWithSourcesChain
+        
+        chain = RetrievalQAWithSourcesChain.from_chain_type(
+            llm=self.llm,
+            chain_type="stuff",
+            retriever=retriever,
+            return_source_documents=True
+        )
+        return chain
+
+# Custom document processor
+class DocumentProcessor:
+    def __init__(self):
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200
+        )
+    
+    def process_pdf(self, pdf_path: str):
+        """Process PDF documents"""
+        from langchain.document_loaders import PyPDFLoader
+        loader = PyPDFLoader(pdf_path)
+        pages = loader.load_and_split(self.text_splitter)
+        return pages
+    
+    def process_web_content(self, urls: list):
+        """Process web content"""
+        from langchain.document_loaders import WebBaseLoader
+        loader = WebBaseLoader(urls)
+        docs = loader.load()
+        splits = self.text_splitter.split_documents(docs)
+        return splits
+    
+    def process_csv_data(self, csv_path: str):
+        """Process CSV data"""
+        from langchain.document_loaders import CSVLoader
+        loader = CSVLoader(csv_path)
+        docs = loader.load()
+        return docs
+    
+    def add_metadata(self, documents, metadata: dict):
+        """Add metadata to documents"""
+        for doc in documents:
+            doc.metadata.update(metadata)
+        return documents
+
+# Memory-enhanced RAG
+class MemoryRAGAgent:
+    def __init__(self, openai_api_key: str):
+        self.llm = OpenAI(openai_api_key=openai_api_key)
+        self.embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+        self.conversation_history = []
+        self.user_preferences = {}
+    
+    def personalized_retrieval(self, query: str, vectorstore):
+        """Personalized retrieval based on user history"""
+        # Enhance query with user context
+        context_query = self._add_user_context(query)
+        
+        retriever = vectorstore.as_retriever(
+            search_type="mmr",  # Maximum Marginal Relevance
+            search_kwargs={
+                "k": 5,
+                "fetch_k": 20,
+                "lambda_mult": 0.7
+            }
+        )
+        
+        docs = retriever.get_relevant_documents(context_query)
+        return docs
+    
+    def _add_user_context(self, query: str) -> str:
+        """Add user context to query"""
+        if self.conversation_history:
+            recent_context = " ".join(self.conversation_history[-3:])
+            enhanced_query = f"Context: {recent_context}\nQuery: {query}"
+            return enhanced_query
+        return query
+    
+    def update_user_preferences(self, feedback: dict):
+        """Update user preferences based on feedback"""
+        self.user_preferences.update(feedback)
+    
+    def log_interaction(self, query: str, response: str):
+        """Log user interactions"""
+        self.conversation_history.append(f"Q: {query} A: {response}")
+        if len(self.conversation_history) > 10:
+            self.conversation_history.pop(0)
+
+# Production RAG setup
+def setup_production_rag():
+    """Setup production-ready RAG system"""
+    import logging
+    
+    # Setup logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
+    # Initialize components
+    processor = DocumentProcessor()
+    rag_agent = EnterpriseRAGAgent("your-api-key")
+    
+    # Process documents
+    documents = []
+    documents.extend(processor.process_pdf("./docs/manual.pdf"))
+    documents.extend(processor.process_web_content(["https://docs.example.com"]))
+    
+    # Add metadata
+    documents = processor.add_metadata(documents, {
+        "processed_date": "2024-01-01",
+        "version": "1.0"
+    })
+    
+    # Create vectorstore
+    vectorstore = Chroma.from_documents(
+        documents=documents,
+        embedding=rag_agent.embeddings,
+        persist_directory="./production_db"
+    )
+    
+    # Setup advanced retriever
+    base_retriever = vectorstore.as_retriever()
+    compressed_retriever = rag_agent.setup_contextual_compression(base_retriever)
+    
+    # Create final chain
+    qa_chain = rag_agent.create_rag_chain_with_sources(compressed_retriever)
+    
+    logger.info("Production RAG system ready")
+    return qa_chain
+
+# Usage
+if __name__ == "__main__":
+    qa_system = setup_production_rag()
+    result = qa_system({"question": "How do I deploy the system?"})
+    print(f"Answer: {result['answer']}")
+    print(f"Sources: {result['sources']}")
+```
+
+### 15-min Review Questions:
+1. What are the key components of a RAG system?
+2. How does contextual compression improve retrieval quality?
+3. When should you use hybrid retrieval vs single-mode retrieval?
+
+
+## Session 7: Agent Orchestration & Multi-Agent Systems (2 hours)
+**Focus:** Coordinating multiple agents and complex workflows
+
+### Hour 1: Multi-Agent Architecture
+```python
+from abc import ABC, abstractmethod
+from typing import Dict, List, Any, Optional
+from enum import Enum
+import asyncio
+import json
+from dataclasses import dataclass, asdict
+from datetime import datetime
+
+class MessageType(Enum):
+    TASK_REQUEST = "task_request"
+    TASK_RESPONSE = "task_response"
+    COORDINATION = "coordination"
+    STATUS_UPDATE = "status_update"
+
+@dataclass
+class Message:
+    sender: str
+    receiver: str
+    message_type: MessageType
+    content: Dict[str, Any]
+    timestamp: str
+    message_id: str
+
+class MessageBus:
+    """Central message bus for agent communication"""
+    
+    def __init__(self):
+        self.subscribers: Dict[str, List[callable]] = {}
+        self.message_history: List[Message] = []
+    
+    def subscribe(self, agent_id: str, callback: callable):
+        """Subscribe agent to message bus"""
+        if agent_id not in self.subscribers:
+            self.subscribers[agent_id] = []
+        self.subscribers[agent_id].append(callback)
+    
+    def publish(self, message: Message):
+        """Publish message to subscribers"""
+        self.message_history.append(message)
+        
+        if message.receiver in self.subscribers:
+            for callback in self.subscribers[message.receiver]:
+                callback(message)
+        
+        # Broadcast messages (receiver = "all")
+        if message.receiver == "all":
+            for agent_id, callbacks in self.subscribers.items():
+                if agent_id != message.sender:
+                    for callback in callbacks:
+                        callback(message)
+
+class BaseAgent(ABC):
+    """Base class for all agents in the system"""
+    
+    def __init__(self, agent_id: str, message_bus: MessageBus, capabilities: List[str]):
+        self.agent_id = agent_id
+        self.capabilities = capabilities
+        self.message_bus = message_bus
+        self.status = "idle"
+        self.current_task = None
+        
+        # Subscribe to message bus
+        self.message_bus.subscribe(self.agent_id, self.handle_message)
+    
+    @abstractmethod
+    async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Process a specific task"""
+        pass
+    
+    def handle_message(self, message: Message):
+        """Handle incoming messages"""
+        if message.message_type == MessageType.TASK_REQUEST:
+            asyncio.create_task(self._handle_task_request(message))
+        elif message.message_type == MessageType.COORDINATION:
+            self._handle_coordination(message)
+    
+    async def _handle_task_request(self, message: Message):
+        """Handle task request message"""
+        task = message.content
+        
+        if self._can_handle_task(task):
+            self.status = "working"
+            self.current_task = task
+            
+            try:
+                result = await self.process_task(task)
+                
+                response = Message(
+                    sender=self.agent_id,
+                    receiver=message.sender,
+                    message_type=MessageType.TASK_RESPONSE,
+                    content={"result": result, "status": "completed"},
+                    timestamp=str(datetime.now()),
+                    message_id=f"{self.agent_id}_{datetime.now().timestamp()}"
+                )
+                
+                self.message_bus.publish(response)
+                
+            except Exception as e:
+                error_response = Message(
+                    sender=self.agent_id,
+                    receiver=message.sender,
+                    message_type=MessageType.TASK_RESPONSE,
+                    content={"error": str(e), "status": "failed"},
+                    timestamp=str(datetime.now()),
+                    message_id=f"{self.agent_id}_{datetime.now().timestamp()}"
+                )
+                self.message_bus.publish(error_response)
+            
+            finally:
+                self.status = "idle"
+                self.current_task = None
+    
+    def _can_handle_task(self, task: Dict[str, Any]) -> bool:
+        """Check if agent can handle the task"""
+        required_capability = task.get("required_capability")
+        return required_capability in self.capabilities
+    
+    def _handle_coordination(self, message: Message):
+        """Handle coordination messages"""
+        pass
+    
+    def send_message(self, receiver: str, message_type: MessageType, content: Dict[str, Any]):
+        """Send message to another agent"""
+        message = Message(
+            sender=self.agent_id,
+            receiver=receiver,
+            message_type=message_type,
+            content=content,
+            timestamp=str(datetime.now()),
+            message_id=f"{self.agent_id}_{datetime.now().timestamp()}"
+        )
+        self.message_bus.publish(message)
+
+# Specific agent implementations
+class ResearchAgent(BaseAgent):
+    """Agent specialized in research tasks"""
+    
+    def __init__(self, agent_id: str, message_bus: MessageBus, llm_client):
+        super().__init__(agent_id, message_bus, ["research", "web_search", "summarization"])
+        self.llm = llm_client
+    
+    async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Process research task"""
+        query = task.get("query", "")
+        task_type = task.get("type", "research")
+        
+        if task_type == "research":
+            return await self._conduct_research(query)
+        elif task_type == "summarization":
+            return await self._summarize_content(task.get("content", ""))
+        
+        return {"error": "Unknown research task type"}
+    
+    async def _conduct_research(self, query: str) -> Dict[str, Any]:
+        """Conduct research on a topic"""
+        # Mock research implementation
+        await asyncio.sleep(2)  # Simulate research time
+        
+        research_result = f"Research findings for '{query}': Comprehensive analysis completed"
+        
+        return {
+            "type": "research_result",
+            "query": query,
+            "findings": research_result,
+            "sources": ["source1.com", "source2.com"],
+            "timestamp": str(datetime.now())
+        }
+    
+    async def _summarize_content(self, content: str) -> Dict[str, Any]:
+        """Summarize content"""
+        # Use LLM for summarization
+        summary = f"Summary of content: {content[:100]}..."
+        
+        return {
+            "type": "summary",
+            "original_length": len(content),
+            "summary": summary,
+            "compression_ratio": len(summary) / len(content)
+        }
+
+class WritingAgent(BaseAgent):
+    """Agent specialized in writing tasks"""
+    
+    def __init__(self, agent_id: str, message_bus: MessageBus, llm_client):
+        super().__init__(agent_id, message_bus, ["writing", "editing", "content_creation"])
+        self.llm = llm_client
+    
+    async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Process writing task"""
+        task_type = task.get("type", "write")
+        
+        if task_type == "write":
+            return await self._write_content(task)
+        elif task_type == "edit":
+            return await self._edit_content(task)
+        
+        return {"error": "Unknown writing task type"}
+    
+    async def _write_content(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Write content based on requirements"""
+        topic = task.get("topic", "")
+        style = task.get("style", "informative")
+        length = task.get("length", "medium")
+        
+        # Mock writing implementation
+        await asyncio.sleep(3)  # Simulate writing time
+        
+        content = f"Written content about '{topic}' in {style} style, {length} length"
+        
+        return {
+            "type": "written_content",
+            "topic": topic,
+            "content": content,
+            "word_count": len(content.split()),
+            "style": style
+        }
+    
+    async def _edit_content(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Edit existing content"""
+        original_content = task.get("content", "")
+        edit_type = task.get("edit_type", "grammar")
+        
+        # Mock editing implementation
+        edited_content = f"[EDITED] {original_content}"
+        
+        return {
+            "type": "edited_content",
+            "original": original_content,
+            "edited": edited_content,
+            "changes_made": [f"{edit_type} corrections applied"]
+        }
+
+class CoordinatorAgent(BaseAgent):
+    """Agent that coordinates tasks between other agents"""
+    
+    def __init__(self, agent_id: str, message_bus: MessageBus):
+        super().__init__(agent_id, message_bus, ["coordination", "task_planning", "workflow_management"])
+        self.active_workflows: Dict[str, Dict] = {}
+        self.agent_capabilities: Dict[str, List[str]] = {}
+    
+    def register_agent(self, agent_id: str, capabilities: List[str]):
+        """Register an agent and its capabilities"""
+        self.agent_capabilities[agent_id] = capabilities
+    
+    async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Process coordination task"""
+        if task.get("type") == "complex_workflow":
+            return await self._execute_complex_workflow(task)
+        elif task.get("type") == "simple_delegation":
+            return await self._delegate_simple_task(task)
+        
+        return {"error": "Unknown coordination task type"}
+    
+    async def _execute_complex_workflow(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a complex multi-step workflow"""
+        workflow_id = f"workflow_{datetime.now().timestamp()}"
+        steps = task.get("steps", [])
+        
+        self.active_workflows[workflow_id] = {
+            "steps": steps,
+            "current_step": 0,
+            "results": [],
+            "status": "running"
+        }
+        
+        results = []
+        
+        for i, step in enumerate(steps):
+            # Find capable agent
+            capable_agent = self._find_capable_agent(step.get("required_capability"))
+            
+            if not capable_agent:
+                return {"error": f"No agent capable of handling step {i+1}"}
+            
+            # Send task to agent
+            self.send_message(
+                receiver=capable_agent,
+                message_type=MessageType.TASK_REQUEST,
+                content=step
+            )
+            
+            # Wait for response (simplified - in production, use proper async handling)
+            await asyncio.sleep(5)  # Mock wait time
+            
+            # Mock result collection
+            result = {"step": i+1, "status": "completed", "agent": capable_agent}
+            results.append(result)
+        
+        self.active_workflows[workflow_id]["status"] = "completed"
+        self.active_workflows[workflow_id]["results"] = results
+        
+        return {
+            "workflow_id": workflow_id,
+            "status": "completed",
+            "results": results
+        }
+    
+    async def _delegate_simple_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Delegate a simple task to appropriate agent"""
+        required_capability = task.get("required_capability")
+        capable_agent = self._find_capable_agent(required_capability)
+        
+        if not capable_agent:
+            return {"error": f"No agent capable of handling {required_capability}"}
+        
+        self.send_message(
+            receiver=capable_agent,
+            message_type=MessageType.TASK_REQUEST,
+            content=task
+        )
+        
+        return {
+            "status": "delegated",
+            "assigned_agent": capable_agent,
+            "task_id": task.get("id", "unknown")
+        }
+    
+    def _find_capable_agent(self, required_capability: str) -> Optional[str]:
+        """Find an agent capable of handling the required capability"""
+        for agent_id, capabilities in self.agent_capabilities.items():
+            if required_capability in capabilities:
+                return agent_id
+        return None
+
+# Multi-agent system setup
+class MultiAgentSystem:
+    """Main system that manages all agents"""
+    
+    def __init__(self):
+        self.message_bus = MessageBus()
+        self.agents: Dict[str, BaseAgent] = {}
+        self.coordinator = None
+    
+    def add_agent(self, agent: BaseAgent):
+        """Add an agent to the system"""
+        self.agents[agent.agent_id] = agent
+        
+        # Register with coordinator if exists
+        if self.coordinator:
+            self.coordinator.register_agent(agent.agent_id, agent.capabilities)
+    
+    def set_coordinator(self, coordinator: CoordinatorAgent):
+        """Set the coordinator agent"""
+        self.coordinator = coordinator
+        self.add_agent(coordinator)
+        
+        # Register all existing agents with coordinator
+        for agent in self.agents.values():
+            if agent.agent_id != coordinator.agent_id:
+                coordinator.register_agent(agent.agent_id, agent.capabilities)
+    
+    async def execute_complex_task(self, task_description: str) -> Dict[str, Any]:
+        """Execute a complex task using multiple agents"""
+        if not self.coordinator:
+            return {"error": "No coordinator available"}
+        
+        # Parse task into workflow steps (simplified)
+        workflow_task = {
+            "type": "complex_workflow",
+            "description": task_description,
+            "steps": [
+                {"required_capability": "research", "query": task_description},
+                {"required_capability": "writing", "topic": task_description, "type": "write"}
+            ]
+        }
+        
+        result = await self.coordinator.process_task(workflow_task)
+        return result
+    
+    def get_system_status(self) -> Dict[str, Any]:
+        """Get status of all agents in the system"""
+        status = {}
+        for agent_id, agent in self.agents.items():
+            status[agent_id] = {
+                "status": agent.status,
+                "capabilities": agent.capabilities,
+                "current_task": agent.current_task
+            }
+        return status
+
+# Usage example
+async def setup_multi_agent_system():
+    """Setup and run multi-agent system"""
+    # Create system
+    mas = MultiAgentSystem()
+    
+    # Create agents
+    research_agent = ResearchAgent("researcher_1", mas.message_bus, None)  # llm_client would go here
+    writing_agent = WritingAgent("writer_1", mas.message_bus, None)
+    coordinator = CoordinatorAgent("coordinator", mas.message_bus)
+    
+    # Add agents to system
+    mas.add_agent(research_agent)
+    mas.add_agent(writing_agent)
+    mas.set_coordinator(coordinator)
+    
+    # Execute complex task
+    result = await mas.execute_complex_task("Write a report on AI agent architectures")
+    
+    print(f"Task result: {result}")
+    print(f"System status: {mas.get_system_status()}")
+    
+    return mas
+
+if __name__ == "__main__":
+    asyncio.run(setup_multi_agent_system())
+```
+
+### Hour 2: CrewAI and Advanced Orchestration
+```python
+# CrewAI implementation example
+from crewai import Agent, Task, Crew, Process
+from crewai.tools import BaseTool
+from typing import Type
+from pydantic import BaseModel, Field
+
+class SearchToolInput(BaseModel):
+    """Input schema for SearchTool."""
+    search_query: str = Field(..., description="The search query to find information")
+
+class SearchTool(BaseTool):
+    name: str = "search_tool"
+    description: str = "Search for information on the internet"
+    args_schema: Type[BaseModel] = SearchToolInput
+
+    def _run(self, search_query: str) -> str:
+        # Mock search implementation
+        return f"Search results for '{search_query}': Relevant information found"
+
+class CalculatorTool(BaseTool):
+    name: str = "calculator"
+    description: str = "Perform mathematical calculations"
+    
+    def _run(self, expression: str) -> str:
+        try:
+            result = eval(expression)  # Use safe evaluator in production
+            return f"The result of {expression} is {result}"
+        except Exception as e:
+            return f"Calculation error: {str(e)}"
+
+class CrewAISystem:
+    def __init__(self):
+        self.search_tool = SearchTool()
+        self.calculator_tool = CalculatorTool()
+        self.agents = self._create_agents()
+    
+    def _create_agents(self):
+        """Create specialized agents"""
+        
+        # Research Agent
+        researcher = Agent(
+            role='Senior Research Analyst',
+            goal='Uncover cutting-edge developments in AI and data science',
+            backstory="""You work at a leading tech think tank.
+            Your expertise lies in identifying emerging trends.
+            You have a knack for dissecting complex data and presenting actionable insights.""",
+            verbose=True,
+            allow_delegation=False,
+            tools=[self.search_tool]
+        )
+        
+        # Writer Agent
+        writer = Agent(
+            role='Tech Content Strategist',
+            goal='Craft compelling content on tech advancements',
+            backstory="""You are a renowned Content Strategist, known for your insightful
+            and engaging articles. You transform complex concepts into compelling narratives.""",
+            verbose=True,
+            allow_delegation=True
+        )
+        
+        # Data Analyst Agent
+        analyst = Agent(
+            role='Data Analyst',
+            goal='Analyze data and provide statistical insights',
+            backstory="""You are an expert data analyst with a keen eye for patterns
+            and statistical significance. You excel at turning raw data into actionable insights.""",
+            verbose=True,
+            allow_delegation=False,
+            tools=[self.calculator_tool]
+        )
+        
+        return {
+            'researcher': researcher,
+            'writer': writer,
+            'analyst': analyst
+        }
+    
+    def create_research_crew(self, topic: str):
+        """Create a crew for research tasks"""
+        
+        # Define tasks
+        research_task = Task(
+            description=f"""Conduct a comprehensive analysis of {topic}.
+            Focus on the latest developments, key players, and future implications.
+            Your final answer MUST be a detailed report with key findings.""",
+            expected_output="A comprehensive research report with key findings and insights",
+            agent=self.agents['researcher']
+        )
+        
+        analysis_task = Task(
+            description=f"""Using the research findings, perform statistical analysis
+            and identify key trends and patterns related to {topic}.""",
+            expected_output="Statistical analysis with trends and patterns identified",
+            agent=self.agents['analyst']
+        )
+        
+        writing_task = Task(
+            description=f"""Using the research and analysis, create a compelling article
+            about {topic} that is engaging and informative for a general audience.""",
+            expected_output="A well-written article suitable for publication",
+            agent=self.agents['writer']
+        )
+        
+        # Create crew
+        crew = Crew(
+            agents=[self.agents['researcher'], self.agents['analyst'], self.agents['writer']],
+            tasks=[research_task, analysis_task, writing_task],
+            verbose=2,
+            process=Process.sequential
+        )
+        
+        return crew
+    
+    def execute_parallel_crew(self, topics: list):
+        """Execute multiple crews in parallel"""
+        import concurrent.futures
+        
+        def run_crew(topic):
+            crew = self.create_research_crew(topic)
+            return crew.kickoff()
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            future_to_topic = {executor.submit(run_crew, topic): topic for topic in topics}
+            results = {}
+            
+            for future in concurrent.futures.as_completed(future_to_topic):
+                topic = future_to_topic[future]
+                try:
+                    result = future.result()
+                    results[topic] = result
+                except Exception as exc:
+                    results[topic] = f"Error: {exc}"
+        
+        return results
+
+# LangGraph implementation for complex workflows
+from langgraph.graph import Graph, StateGraph, END
+from langgraph.prebuilt import ToolExecutor, ToolInvocation
+from typing import TypedDict, Annotated, Sequence
+import operator
+
+class AgentState(TypedDict):
+    messages: Annotated[Sequence[str], operator.add]
+    current_step: str
+    results: dict
+    error: str
+
+class LangGraphOrchestrator:
+    def __init__(self):
+        self.tools = self._setup_tools()
+        self.tool_executor = ToolExecutor(self.tools)
+    
+    def _setup_tools(self):
+        """Setup tools for the workflow"""
+        def research_tool(query: str) -> str:
+            return f"Research completed for: {query}"
+        
+        def analysis_tool(data: str) -> str:
+            return f"Analysis completed for: {data}"
+        
+        def writing_tool(content: str) -> str:
+            return f"Article written based on: {content}"
+        
+        return [research_tool, analysis_tool, writing_tool]
+    
+    def research_node(self, state: AgentState):
+        """Research node in the workflow"""
+        messages = state.get('messages', [])
+        
+        # Perform research
+        research_result = "Research findings: Comprehensive data collected"
+        
+        return {
+            "messages": messages + [research_result],
+            "current_step": "research_completed",
+            "results": {**state.get('results', {}), "research": research_result}
+        }
+    
+    def analysis_node(self, state: AgentState):
+        """Analysis node in the workflow"""
+        messages = state.get('messages', [])
+        research_data = state.get('results', {}).get('research', '')
+        
+        # Perform analysis
+        analysis_result = f"Analysis complete: {research_data} analyzed"
+        
+        return {
+            "messages": messages + [analysis_result],
+            "current_step": "analysis_completed",
+            "results": {**state.get('results', {}), "analysis": analysis_result}
+        }
+    
+    def writing_node(self, state: AgentState):
+        """Writing node in the workflow"""
+        messages = state.get('messages', [])
+        analysis_data = state.get('results', {}).get('analysis', '')
+        
+        # Perform writing
+        writing_result = f"Article completed based on: {analysis_data}"
+        
+        return {
+            "messages": messages + [writing_result],
+            "current_step": "writing_completed",
+            "results": {**state.get('results', {}), "writing": writing_result}
+        }
+    
+    def should_continue(self, state: AgentState):
+        """Determine if workflow should continue"""
+        current_step = state.get('current_step', '')
+        
+        if current_step == "research_completed":
+            return "analysis"
+        elif current_step == "analysis_completed":
+            return "writing"
+        elif current_step == "writing_completed":
+            return END
+        else:
+            return "research"
+    
+    def create_workflow(self):
+        """Create the LangGraph workflow"""
+        workflow = StateGraph(AgentState)
+        
+        # Add nodes
+        workflow.add_node("research", self.research_node)
+        workflow.add_node("analysis", self.analysis_node)
+        workflow.add_node("writing", self.writing_node)
+        
+        # Add edges
+        workflow.set_entry_point("research")
+        
+        workflow.add_conditional_edges(
+            "research",
+            self.should_continue,
+            {
+                "analysis": "analysis",
+                END: END
+            }
+        )
+        
+        workflow.add_conditional_edges(
+            "analysis",
+            self.should_continue,
+            {
+                "writing": "writing",
+                END: END
+            }
+        )
+        
+        workflow.add_conditional_edges(
+            "writing",
+            self.should_continue,
+            {
+                END: END
+            }
+        )
+        
+        return workflow.compile()
+    
+    def execute_workflow(self, initial_query: str):
+        """Execute the complete workflow"""
+        app = self.create_workflow()
+        
+        initial_state = {
+            "messages": [f"Starting workflow for: {initial_query}"],
+            "current_step": "start",
+            "results": {},
+            "error": ""
+        }
+        
+        result = app.invoke(initial_state)
+        return result
+
+# Advanced orchestration patterns
+class WorkflowManager:
+    def __init__(self):
+        self.active_workflows = {}
+        self.completed_workflows = {}
+        self.workflow_templates = self._create_templates()
+    
+    def _create_templates(self):
+        """Create workflow templates"""
+        return {
+            "content_creation": {
+                "steps": ["research", "analysis", "writing", "review"],
+                "parallel_allowed": ["research", "analysis"],
+                "dependencies": {
+                    "analysis": ["research"],
+                    "writing": ["research", "analysis"],
+                    "review": ["writing"]
+                }
+            },
+            "data_processing": {
+                "steps": ["collection", "cleaning", "analysis", "visualization"],
+                "parallel_allowed": ["cleaning", "analysis"],
+                "dependencies": {
+                    "cleaning": ["collection"],
+                    "analysis": ["cleaning"],
+                    "visualization": ["analysis"]
+                }
+            }
+        }
+    
+    def create_dynamic_workflow(self, template_name: str, parameters: dict):
+        """Create a dynamic workflow from template"""
+        if template_name not in self.workflow_templates:
+            raise ValueError(f"Template {template_name} not found")
+        
+        template = self.workflow_templates[template_name]
+        workflow_id = f"{template_name}_{len(self.active_workflows)}"
+        
+        workflow = {
+            "id": workflow_id,
+            "template": template_name,
+            "steps": template["steps"].copy(),
+            "current_step": 0,
+            "parameters": parameters,
+            "status": "created",
+            "results": {},
+            "start_time": datetime.now(),
+            "dependencies": template["dependencies"]
+        }
+        
+        self.active_workflows[workflow_id] = workflow
+        return workflow_id
+    
+    async def execute_workflow(self, workflow_id: str):
+        """Execute a workflow with dependency management"""
+        if workflow_id not in self.active_workflows:
+            raise ValueError(f"Workflow {workflow_id} not found")
+        
+        workflow = self.active_workflows[workflow_id]
+        workflow["status"] = "running"
+        
+        completed_steps = set()
+        
+        while len(completed_steps) < len(workflow["steps"]):
+            # Find steps that can be executed (dependencies met)
+            executable_steps = []
+            
+            for step in workflow["steps"]:
+                if step not in completed_steps:
+                    dependencies = workflow["dependencies"].get(step, [])
+                    if all(dep in completed_steps for dep in dependencies):
+                        executable_steps.append(step)
+            
+            if not executable_steps:
+                break  # No more steps can be executed
+            
+            # Execute steps (potentially in parallel)
+            for step in executable_steps:
+                result = await self._execute_step(step, workflow["parameters"])
+                workflow["results"][step] = result
+                completed_steps.add(step)
+        
+        workflow["status"] = "completed"
+        workflow["end_time"] = datetime.now()
+        
+        # Move to completed workflows
+        self.completed_workflows[workflow_id] = workflow
+        del self.active_workflows[workflow_id]
+        
+        return workflow
+    
+    async def _execute_step(self, step: str, parameters: dict):
+        """Execute a single workflow step"""
+        # Mock step execution
+        await asyncio.sleep(1)  # Simulate processing time
+        return f"Step {step} completed with parameters: {parameters}"
+    
+    def get_workflow_status(self, workflow_id: str):
+        """Get status of a workflow"""
+        if workflow_id in self.active_workflows:
+            return self.active_workflows[workflow_id]
+        elif workflow_id in self.completed_workflows:
+            return self.completed_workflows[workflow_id]
+        else:
+            return None
+
+# Usage examples
+async def orchestration_examples():
+    """Examples of different orchestration patterns"""
+    
+    # 1. CrewAI example
+    print("=== CrewAI Example ===")
+    crew_system = CrewAISystem()
+    crew = crew_system.create_research_crew("Artificial Intelligence")
+    # result = crew.kickoff()  # Uncomment when CrewAI is properly installed
+    
+    # 2. LangGraph example
+    print("=== LangGraph Example ===")
+    langgraph_orchestrator = LangGraphOrchestrator()
+    workflow_result = langgraph_orchestrator.execute_workflow("AI agent architectures")
+    print(f"LangGraph result: {workflow_result}")
+    
+    # 3. Dynamic workflow example
+    print("=== Dynamic Workflow Example ===")
+    workflow_manager = WorkflowManager()
+    workflow_id = workflow_manager.create_dynamic_workflow(
+        "content_creation", 
+        {"topic": "AI trends", "target_audience": "technical"}
+    )
+    
+    result = await workflow_manager.execute_workflow(workflow_id)
+    print(f"Dynamic workflow result: {result}")
+
+if __name__ == "__main__":
+    asyncio.run(orchestration_examples())
+```
+
+### 15-min Review Questions:
+1. What are the key benefits of multi-agent systems over single agents?
+2. How do you handle coordination and communication between agents?
+3. When should you use sequential vs parallel agent execution?
+
+
+## Session 8: Memory Management & Persistence (2 hours)
+**Focus:** Managing agent memory and state across conversations
+
+### Hour 1: Memory Systems Architecture
+```python
+from abc import ABC, abstractmethod
+from typing import Dict, List, Any, Optional, Tuple
+import json
+import sqlite3
+import pickle
+import hashlib
+from datetime import datetime, timedelta
+from dataclasses import dataclass, asdict
+from collections import deque
+import redis
+import chromadb
+
+@dataclass
+class MemoryEntry:
+    id: str
+    content: str
+    metadata: Dict[str, Any]
+    timestamp: datetime
+    memory_type: str
+    importance: float
+    access_count: int = 0
+    last_accessed: Optional[datetime] = None
+
+class BaseMemory(ABC):
+    """Base class for all memory implementations"""
+    
+    @abstractmethod
+    def store(self, content: str, metadata: Dict[str, Any], memory_type: str = "episodic") -> str:
+        """Store a memory entry"""
+        pass
+    
+    @abstractmethod
+    def retrieve(self, query: str, k: int = 5) -> List[MemoryEntry]:
+        """Retrieve relevant memories"""
+        pass
+    
+    @abstractmethod
+    def update(self, memory_id: str, content: str = None, metadata: Dict[str, Any] = None) -> bool:
+        """Update an existing memory"""
+        pass
+    
+    @abstractmethod
+    def delete(self, memory_id: str) -> bool:
+        """Delete a memory entry"""
+        pass
+
+class ShortTermMemory(BaseMemory):
+    """Working memory for current conversation"""
+    
+    def __init__(self, max_size: int = 50):
+        self.max_size = max_size
+        self.memories: deque = deque(maxlen=max_size)
+        self.memory_index: Dict[str, MemoryEntry] = {}
+    
+    def store(self, content: str, metadata: Dict[str, Any], memory_type: str = "working") -> str:
+        """Store in short-term memory"""
+        memory_id = self._generate_id(content)
+        
+        memory_entry = MemoryEntry(
+            id=memory_id,
+            content=content,
+            metadata=metadata,
+            timestamp=datetime.now(),
+            memory_type=memory_type,
+            importance=metadata.get("importance", 0.5)
+        )
+        
+        # Remove oldest if at capacity
+        if len(self.memories) >= self.max_size:
+            old_memory = self.memories.popleft()
+            del self.memory_index[old_memory.id]
+        
+        self.memories.append(memory_entry)
+        self.memory_index[memory_id] = memory_entry
+        
+        return memory_id
+    
+    def retrieve(self, query: str, k: int = 5) -> List[MemoryEntry]:
+        """Retrieve from short-term memory based on recency and relevance"""
+        memories = list(self.memories)
+        
+        # Simple relevance scoring (keyword matching)
+        scored_memories = []
+        query_words = set(query.lower().split())
+        
+        for memory in memories:
+            content_words = set(memory.content.lower().split())
+            relevance = len(query_words.intersection(content_words)) / max(len(query_words), 1)
+            
+            # Combine relevance with recency
+            time_decay = self._calculate_time_decay(memory.timestamp)
+            score = relevance * 0.7 + time_decay * 0.3
+            
+            scored_memories.append((score, memory))
+        
+        # Sort by score and return top k
+        scored_memories.sort(key=lambda x: x[0], reverse=True)
+        return [memory for _, memory in scored_memories[:k]]
+    
+    def update(self, memory_id: str, content: str = None, metadata: Dict[str, Any] = None) -> bool:
+        """Update short-term memory"""
+        if memory_id not in self.memory_index:
+            return False
+        
+        memory = self.memory_index[memory_id]
+        
+        if content:
+            memory.content = content
+        if metadata:
+            memory.metadata.update(metadata)
+        
+        memory.access_count += 1
+        memory.last_accessed = datetime.now()
+        
+        return True
+    
+    def delete(self, memory_id: str) -> bool:
+        """Delete from short-term memory"""
+        if memory_id not in self.memory_index:
+            return False
+        
+        memory = self.memory_index[memory_id]
+        self.memories.remove(memory)
+        del self.memory_index[memory_id]
+        
+        return True
+    
+    def _generate_id(self, content: str) -> str:
+        """Generate unique ID for memory entry"""
+        return hashlib.md5(f"{content}{datetime.now()}".encode()).hexdigest()[:16]
+    
+    def _calculate_time_decay(self, timestamp: datetime) -> float:
+        """Calculate time decay factor (1.0 = recent, 0.0 = old)"""
+        now = datetime.now()
+        diff = (now - timestamp).total_seconds()
+        max_age = 3600  # 1 hour
+        return max(0, 1 - (diff / max_age))
+    
+    def get_conversation_summary(self) -> str:
+        """Get summary of current conversation"""
+        if not self.memories:
+            return "No conversation history"
+        
+        recent_memories = list(self.memories)[-10:]  # Last 10 entries
+        summary_parts = [memory.content for memory in recent_memories]
+        
+        return " | ".join(summary_parts)
+
+class LongTermMemory(BaseMemory):
+    """Persistent memory stored in database"""
+    
+    def __init__(self, db_path: str = "agent_memory.db"):
+        self.db_path = db_path
+        self._init_database()
+    
+    def _init_database(self):
+        """Initialize SQLite database"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS memories (
+                id TEXT PRIMARY KEY,
+                content TEXT NOT NULL,
+                metadata TEXT,
+                timestamp TEXT,
+                memory_type TEXT,
+                importance REAL,
+                access_count INTEGER DEFAULT 0,
+                last_accessed TEXT
+            )
+        ''')
+        
+        # Create index for faster searches
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_memory_type ON memories(memory_type)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_timestamp ON memories(timestamp)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_importance ON memories(importance)')
+        
+        conn.commit()
+        conn.close()
+    
+    def store(self, content: str, metadata: Dict[str, Any], memory_type: str = "episodic") -> str:
+        """Store in long-term memory"""
+        memory_id = self._generate_id(content)
+        
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT OR REPLACE INTO memories 
+            (id, content, metadata, timestamp, memory_type, importance)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            memory_id,
+            content,
+            json.dumps(metadata),
+            datetime.now().isoformat(),
+            memory_type,
+            metadata.get("importance", 0.5)
+        ))
+        
+        conn.commit()
+        conn.close()
+        
+        return memory_id
+    
+    def retrieve(self, query: str, k: int = 5, memory_type: str = None) -> List[MemoryEntry]:
+        """Retrieve from long-term memory with semantic search"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Build query
+        sql_query = '''
+            SELECT id, content, metadata, timestamp, memory_type, importance, access_count, last_accessed
+            FROM memories
+        '''
+        params = []
+        
+        if memory_type:
+            sql_query += ' WHERE memory_type = ?'
+            params.append(memory_type)
+        
+        sql_query += ' ORDER BY importance DESC, timestamp DESC LIMIT ?'
+        params.append(k * 2)  # Get more to filter
+        
+        cursor.execute(sql_query, params)
+        results = cursor.fetchall()
+        conn.close()
+        
+        # Convert to MemoryEntry objects and score
+        memories = []
+        for row in results:
+            memory = MemoryEntry(
+                id=row[0],
+                content=row[1],
+                metadata=json.loads(row[2]),
+                timestamp=datetime.fromisoformat(row[3]),
+                memory_type=row[4],
+                importance=row[5],
+                access_count=row[6],
+                last_accessed=datetime.fromisoformat(row[7]) if row[7] else None
+            )
+            memories.append(memory)
+        
+        # Simple relevance scoring
+        scored_memories = self._score_memories(memories, query)
+        return scored_memories[:k]
+    
+    def update(self, memory_id: str, content: str = None, metadata: Dict[str, Any] = None) -> bool:
+        """Update long-term memory"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # First, get current memory
+        cursor.execute('SELECT * FROM memories WHERE id = ?', (memory_id,))
+        result = cursor.fetchone()
+        
+        if not result:
+            conn.close()
+            return False
+        
+        # Update fields
+        new_content = content if content else result[1]
+        current_metadata = json.loads(result[2])
+        if metadata:
+            current_metadata.update(metadata)
+        
+        cursor.execute('''
+            UPDATE memories 
+            SET content = ?, metadata = ?, access_count = access_count + 1, last_accessed = ?
+            WHERE id = ?
+        ''', (new_content, json.dumps(current_metadata), datetime.now().isoformat(), memory_id))
+        
+        conn.commit()
+        conn.close()
+        
+        return True
+    
+    def delete(self, memory_id: str) -> bool:
+        """Delete from long-term memory"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('DELETE FROM memories WHERE id = ?', (memory_id,))
+        deleted = cursor.rowcount > 0
+        
+        conn.commit()
+        conn.close()
+        
+        return deleted
+    
+    def _generate_id(self, content: str) -> str:
+        """Generate unique ID"""
+        return hashlib.sha256(f"{content}{datetime.now()}".encode()).hexdigest()[:32]
+    
+    def _score_memories(self, memories: List[MemoryEntry], query: str) -> List[MemoryEntry]:
+        """Score memories based on relevance to query"""
+        query_words = set(query.lower().split())
+        scored_memories = []
+        
+        for memory in memories:
+            content_words = set(memory.content.lower().split())
+            relevance = len(query_words.intersection(content_words)) / max(len(query_words), 1)
+            
+            # Combine multiple factors
+            importance_score = memory.importance
+            recency_score = self._calculate_recency_score(memory.timestamp)
+            access_score = min(memory.access_count / 10.0, 1.0)  # Normalize access count
+            
+            total_score = (relevance * 0.4 + importance_score * 0.3 + 
+                          recency_score * 0.2 + access_score * 0.1)
+            
+            scored_memories.append((total_score, memory))
+        
+        scored_memories.sort(key=lambda x: x[0], reverse=True)
+        return [memory for _, memory in scored_memories]
+    
+    def _calculate_recency_score(self, timestamp: datetime) -> float:
+        """Calculate recency score"""
+        now = datetime.now()
+        diff = (now - timestamp).days
+        return max(0, 1 - (diff / 365))  # Decay over a year
+
+class VectorMemory(BaseMemory):
+    """Vector-based semantic memory using embeddings"""
+    
+    def __init__(self, collection_name: str = "agent_memory"):
+        self.client = chromadb.Client()
+        self.collection = self.client.get_or_create_collection(name=collection_name)
+        self.metadata_store = {}  # Additional metadata storage
+    
+    def store(self, content: str, metadata: Dict[str, Any], memory_type: str = "semantic") -> str:
+        """Store with vector embeddings"""
+        memory_id = self._generate_id(content)
+        
+        # Store in vector database
+        self.collection.add(
+            documents=[content],
+            metadatas=[{
+                "memory_type": memory_type,
+                "timestamp": datetime.now().isoformat(),
+                "importance": metadata.get("importance", 0.5)
+            }],
+            ids=[memory_id]
+        )
+        
+        # Store full metadata separately
+        self.metadata_store[memory_id] = MemoryEntry(
+            id=memory_id,
+            content=content,
+            metadata=metadata,
+            timestamp=datetime.now(),
+            memory_type=memory_type,
+            importance=metadata.get("importance", 0.5)
+        )
+        
+        return memory_id
+    
+    def retrieve(self, query: str, k: int = 5) -> List[MemoryEntry]:
+        """Retrieve using semantic similarity"""
+        results = self.collection.query(
+            query_texts=[query],
+            n_results=k
+        )
+        
+        memories = []
+        for i, memory_id in enumerate(results['ids'][0]):
+            if memory_id in self.metadata_store:
+                memory = self.metadata_store[memory_id]
+                memory.access_count += 1
+                memory.last_accessed = datetime.now()
+                memories.append(memory)
+        
+        return memories
+    
+    def update(self, memory_id: str, content: str = None, metadata: Dict[str, Any] = None) -> bool:
+        """Update vector memory"""
+        if memory_id not in self.metadata_store:
+            return False
+        
+        memory = self.metadata_store[memory_id]
+        
+        if content:
+            # Update vector database
+            self.collection.update(
+                ids=[memory_id],
+                documents=[content]
+            )
+            memory.content = content
+        
+        if metadata:
+            memory.metadata.update(metadata)
+        
+        return True
+    
+    def delete(self, memory_id: str) -> bool:
+        """Delete from vector memory"""
+        if memory_id not in self.metadata_store:
+            return False
+        
+        self.collection.delete(ids=[memory_id])
+        del self.metadata_store[memory_id]
+        
+        return True
+    
+    def _generate_id(self, content: str) -> str:
+        """Generate unique ID"""
+        return hashlib.md5(f"{content}{datetime.now()}".encode()).hexdigest()
+
+class HybridMemorySystem:
+    """Combines multiple memory types for comprehensive memory management"""
+    
+    def __init__(self):
+        self.short_term = ShortTermMemory(max_size=50)
+        self.long_term = LongTermMemory("agent_memory.db")
+        self.vector_memory = VectorMemory("agent_semantic_memory")
+        
+        # Memory consolidation settings
+        self.consolidation_threshold = 5  # Access count threshold
+        self.consolidation_interval = 3600  # 1 hour in seconds
+        self.last_consolidation = datetime.now()
+    
+    def store_memory(self, content: str, metadata: Dict[str, Any], memory_type: str = "episodic"):
+        """Store memory in appropriate system(s)"""
+        importance = metadata.get("importance", 0.5)
+        
+        # Always store in short-term memory
+        short_term_id = self.short_term.store(content, metadata, memory_type)
+        
+        # Store important memories in long-term immediately
+        if importance > 0.7:
+            long_term_id = self.long_term.store(content, metadata, memory_type)
+            self.vector_memory.store(content, metadata, memory_type)
+            return long_term_id
+        
+        return short_term_id
+    
+    def retrieve_memory(self, query: str, k: int = 5, memory_types: List[str] = None) -> List[MemoryEntry]:
+        """Retrieve from all memory systems and merge results"""
+        all_memories = []
+        
+        # Get from short-term memory
+        short_term_memories = self.short_term.retrieve(query, k)
+        all_memories.extend(short_term_memories)
+        
+        # Get from long-term memory
+        for memory_type in (memory_types or ["episodic", "semantic", "procedural"]):
+            long_term_memories = self.long_term.retrieve(query, k//2, memory_type)
+            all_memories.extend(long_term_memories)
+        
+        # Get from vector memory
+        vector_memories = self.vector_memory.retrieve(query, k)
+        all_memories.extend(vector_memories)
+        
+        # Remove duplicates and score
+        unique_memories = {memory.id: memory for memory in all_memories}
+        scored_memories = self._score_hybrid_memories(list(unique_memories.values()), query)
+        
+        return scored_memories[:k]
+    
+    def consolidate_memories(self):
+        """Consolidate important short-term memories to long-term"""
+        current_time = datetime.now()
+        
+        if (current_time - self.last_consolidation).seconds < self.consolidation_interval:
+            return
+        
+        # Find memories to consolidate
+        consolidation_candidates = []
+        
+        for memory in self.short_term.memories:
+            if (memory.access_count >= self.consolidation_threshold or 
+                memory.importance > 0.6):
+                consolidation_candidates.append(memory)
+        
+        # Move to long-term storage
+        for memory in consolidation_candidates:
+            self.long_term.store(memory.content, memory.metadata, memory.memory_type)
+            
+            # Also store in vector memory for semantic search
+            if memory.memory_type in ["episodic", "semantic"]:
+                self.vector_memory.store(memory.content, memory.metadata, memory.memory_type)
+        
+        self.last_consolidation = current_time
+        
+        return len(consolidation_candidates)
+    
+    def _score_hybrid_memories(self, memories: List[MemoryEntry], query: str) -> List[MemoryEntry]:
+        """Score memories from hybrid system"""
+        query_words = set(query.lower().split())
+        scored_memories = []
+        
+        for memory in memories:
+            content_words = set(memory.content.lower().split())
+            relevance = len(query_words.intersection(content_words)) / max(len(query_words), 1)
+            
+            # Memory type bonuses
+            type_bonus = {
+                "working": 0.8,  # Recent working memory
+                "episodic": 0.6,
+                "semantic": 0.7,
+                "procedural": 0.5
+            }.get(memory.memory_type, 0.5)
+            
+            # Access pattern bonus
+            access_bonus = min(memory.access_count / 10.0, 0.3)
+            
+            total_score = (relevance * 0.5 + memory.importance * 0.3 + 
+                          type_bonus * 0.1 + access_bonus * 0.1)
+            
+            scored_memories.append((total_score, memory))
+        
+        scored_memories.sort(key=lambda x: x[0], reverse=True)
+        return [memory for _, memory in scored_memories]
+    
+    def get_memory_stats(self) -> Dict[str, Any]:
+        """Get statistics about memory usage"""
+        return {
+            "short_term_count": len(self.short_term.memories),
+            "short_term_capacity": self.short_term.max_size,
+            "vector_memory_count": len(self.vector_memory
