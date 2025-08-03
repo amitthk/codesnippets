@@ -1,14 +1,14 @@
-# 20-Hour Agentic AI Study Roadmap
-*Focus: 20% of skills that drive 80% of results*
+* 20-Hour Agentic AI Study Roadmap
+** Focus: 20% of skills that drive 80% of results*
 
-## Overview
+** Overview
 The essential skills needed to build and deploy AI agents effectively.
 
 
-## Session 1: Python Fundamentals & API Basics (2 hours)
+** Session 1: Python Fundamentals & API Basics (2 hours)
 **Focus:** Core programming skills for AI agents
 
-### Hour 1: Python Essentials
+*** Hour 1: Python Essentials
 ```python
 # Essential Python for AI Agents
 import requests
@@ -39,7 +39,7 @@ def log_agent_action(action: str, result: str):
         f.write(f"{action}: {result}\n")
 ```
 
-### Hour 2: Async Programming & Error Handling
+*** Hour 2: Async Programming & Error Handling
 ```python
 # Async programming for concurrent agent operations
 import asyncio
@@ -79,7 +79,7 @@ def robust_agent_function(data):
         return {"status": "error", "message": str(e)}
 ```
 
-### 15-min Review Questions:
+*** 15-min Review Questions:
 1. How do you handle API failures in agent code?
 2. When should you use async programming in agents?
 3. What are the key Python patterns for agent development?
@@ -88,7 +88,7 @@ def robust_agent_function(data):
 ## Session 2: LLM APIs & Prompt Engineering (2 hours)
 **Focus:** Working with language models effectively
 
-### Hour 1: OpenAI API Integration
+*** Hour 1: OpenAI API Integration
 ```python
 import openai
 from typing import List, Dict
@@ -126,7 +126,7 @@ result = agent.structured_prompt(
 )
 ```
 
-### Hour 2: Advanced Prompting Techniques
+*** Hour 2: Advanced Prompting Techniques
 ```python
 class AdvancedPrompts:
     @staticmethod
@@ -171,7 +171,7 @@ examples = [
 prompt = AdvancedPrompts.few_shot_prompt(examples, "See you later")
 ```
 
-### 15-min Review Questions:
+*** 15-min Review Questions:
 1. What makes a good system prompt?
 2. How does chain-of-thought improve reasoning?
 3. When should you use few-shot vs zero-shot prompting?
@@ -180,7 +180,7 @@ prompt = AdvancedPrompts.few_shot_prompt(examples, "See you later")
 ## Session 3: Agent Architecture & Decision Making (2 hours)
 **Focus:** Building intelligent agent behavior
 
-### Hour 1: Basic Agent Architecture
+*** Hour 1: Basic Agent Architecture
 ```python
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -283,7 +283,7 @@ class SimpleTaskAgent(Agent):
             return AgentAction("error", {}, str(datetime.now()))
 ```
 
-### Hour 2: ReAct Pattern Implementation
+*** Hour 2: ReAct Pattern Implementation
 ```python
 class ReActAgent(Agent):
     """Reasoning and Acting agent following ReAct pattern"""
@@ -379,7 +379,7 @@ agent = ReActAgent("ReAct Agent", llm_client, tools)
 agent.execute_react_cycle("What is 25 * 4 + 10?")
 ```
 
-### 15-min Review Questions:
+*** 15-min Review Questions:
 1. What are the key components of agent architecture?
 2. How does the ReAct pattern improve agent reasoning?
 3. When should you use different agent patterns?
@@ -388,7 +388,7 @@ agent.execute_react_cycle("What is 25 * 4 + 10?")
 ## Session 4: Tool Integration & Function Calling (2 hours)
 **Focus:** Connecting agents to external tools and APIs
 
-### Hour 1: OpenAI Function Calling
+*** Hour 1: OpenAI Function Calling
 ```python
 import json
 from typing import List, Dict, Callable
@@ -503,7 +503,7 @@ agent.register_function(
 )
 ```
 
-### Hour 2: Custom Tool System
+*** Hour 2: Custom Tool System
 ```python
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
@@ -664,7 +664,7 @@ class ToolEnabledAgent:
         return message.content
 ```
 
-### 15-min Review Questions:
+*** 15-min Review Questions:
 1. How does function calling improve agent capabilities?
 2. What are the best practices for tool parameter definition?
 3. How do you handle tool execution errors gracefully?
@@ -673,7 +673,7 @@ class ToolEnabledAgent:
 ## Session 5: LangChain Framework Fundamentals (2 hours)
 **Focus:** Using LangChain for rapid agent development
 
-### Hour 1: LangChain Basics & Chains
+*** Hour 1: LangChain Basics & Chains
 ```python
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
@@ -746,7 +746,7 @@ long_text = "Long document text here..."
 action_items = sequential_chain.run(long_text)
 ```
 
-### Hour 2: LangChain Agents & Tools
+*** Hour 2: LangChain Agents & Tools
 ```python
 from langchain.agents import Tool, AgentExecutor, create_react_agent
 from langchain.prompts import PromptTemplate
@@ -918,7 +918,7 @@ response1 = memory_agent.chat("My name is John and I live in New York")
 response2 = memory_agent.chat("What's the weather like where I live?")
 ```
 
-### 15-min Review Questions:
+*** 15-min Review Questions:
 1. What are the advantages of using LangChain over custom implementations?
 2. How do chains differ from agents in LangChain?
 3. When should you use memory in your agents?
@@ -929,7 +929,7 @@ response2 = memory_agent.chat("What's the weather like where I live?")
 ## Session 6: RAG Implementation & Knowledge Management (2 hours)
 **Focus:** Building agents that can access and use external knowledge
 
-### Hour 1: Basic RAG Setup
+*** Hour 1: Basic RAG Setup
 ```python
 from langchain.document_loaders import TextLoader, DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -1068,7 +1068,7 @@ print(f"Answer: {result['answer']}")
 print(f"Sources: {result['sources']}")
 ```
 
-### Hour 2: Advanced RAG Techniques
+*** Hour 2: Advanced RAG Techniques
 ```python
 import chromadb
 from langchain.retrievers import ContextualCompressionRetriever
@@ -1267,7 +1267,7 @@ if __name__ == "__main__":
     print(f"Sources: {result['sources']}")
 ```
 
-### 15-min Review Questions:
+*** 15-min Review Questions:
 1. What are the key components of a RAG system?
 2. How does contextual compression improve retrieval quality?
 3. When should you use hybrid retrieval vs single-mode retrieval?
@@ -1276,7 +1276,7 @@ if __name__ == "__main__":
 ## Session 7: Agent Orchestration & Multi-Agent Systems (2 hours)
 **Focus:** Coordinating multiple agents and complex workflows
 
-### Hour 1: Multi-Agent Architecture
+*** Hour 1: Multi-Agent Architecture
 ```python
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional
@@ -1687,7 +1687,7 @@ if __name__ == "__main__":
     asyncio.run(setup_multi_agent_system())
 ```
 
-### Hour 2: CrewAI and Advanced Orchestration
+*** Hour 2: CrewAI and Advanced Orchestration
 ```python
 # CrewAI implementation example
 from crewai import Agent, Task, Crew, Process
@@ -2100,7 +2100,7 @@ if __name__ == "__main__":
     asyncio.run(orchestration_examples())
 ```
 
-### 15-min Review Questions:
+*** 15-min Review Questions:
 1. What are the key benefits of multi-agent systems over single agents?
 2. How do you handle coordination and communication between agents?
 3. When should you use sequential vs parallel agent execution?
@@ -2109,7 +2109,7 @@ if __name__ == "__main__":
 ## Session 8: Memory Management & Persistence (2 hours)
 **Focus:** Managing agent memory and state across conversations
 
-### Hour 1: Memory Systems Architecture
+*** Hour 1: Memory Systems Architecture
 ```python
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional, Tuple
