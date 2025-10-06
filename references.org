@@ -2705,3 +2705,14 @@ To tunnel a remote port 3002 on server2
 #+BEGIN_SRC
 ssh -L 3002:localhost:3002 appadm@server2
 #+END_SRC
+
+
+* Fixing selinux permissions if the service is not starting despite the command works manually
+
+#+BEGIN_SRC
+sudo chcon -R -t bin_t /opt/apps/openjdk21/bin/
+sudo chcon -R -t usr_t /opt/apps/my-service/
+# Or restore default contexts
+sudo restorecon -Rv /opt/apps/openjdk21/
+sudo restorecon -Rv /opt/apps/my-service/
+#+END_SRC
