@@ -1,0 +1,755 @@
+#!/usr/bin/env bash
+# Replace place-holders like <user>, <file>, <service>, <device>, <port>, <repo> as needed.
+
+########################################
+# 0. SHELL BASICS
+########################################
+
+# Current shell
+echo "$SHELL"
+echo "$USER"
+echo "$HOME"
+echo "$PATH"
+
+# Command help
+man ls
+ls --help
+info coreutils
+
+# History & command editing
+history | tail
+!42         # re-run history line 42
+!!          # re-run previous command
+!grep       # re-run last command starting with "grep"
+ctrl+r      # (interactive) reverse search history
+
+########################################
+# 1. FILESYSTEM & PATHS
+########################################
+
+# Where am I?
+pwd
+
+# List files
+ls
+ls -a
+ls -lh
+ls -lha
+ls -R
+
+# Change directory
+cd /
+cd /etc
+cd ..
+cd -
+cd "$HOME"
+
+# Make / remove directories
+mkdir testdir
+mkdir -p parent/child/grandchild
+rmdir emptydir
+rm -r dir_to_delete
+
+# Copy / move
+cp file1 file2
+cp -r dir1 dir2
+mv oldname newname
+mv file /tmp/
+
+# Create / inspect files
+touch file.txt
+cat file.txt
+tac file.txt
+nl -ba file.txt     # numbered lines
+head file.txt
+head -n 20 file.txt
+tail -n 20 file.txt
+tail -f /var/log/messages
+less file.txt
+more file.txt
+wc -l file.txt
+file /bin/bash
+stat file.txt
+
+# Links
+ln file.txt file.hardlink
+ln -s /path/to/target symlink_name
+
+########################################
+# 2. FIND, GREP, AWK, SED
+########################################
+
+# Find files and dirs
+find /etc -name "ssh*"
+find . -type f -size +10M
+find /var/www -type d -exec chmod 2775 {} \;
+find /var/www -type f -exec chmod 0664 {} \;
+
+# grep / egrep
+grep pattern file
+grep -i pattern file
+grep -R pattern /etc
+egrep "error|fail|critical" /var/log/messages
+
+# awk basics
+awk '{print $1}' /var/log/httpd/access_log
+awk -F: '{print $1,$3}' /etc/passwd
+awk '{sum+=$1} END {print sum}' numbers.txt
+
+# sed basics
+sed 's/old/new/' file
+sed 's/old/new/g' file
+sed -n '1,20p' file
+sed '/pattern/d' file
+
+########################################
+# 3. LOGS & LOG ROTATION
+########################################
+
+# System logs
+ls /var/log
+dmesg | less
+journalctl
+journalctl -xe
+journalctl -f
+journalctl --since "2 hours ago"
+journalctl -k          # kernel messages
+journalctl -u sshd     # per-service logs
+
+# Classic log files
+tail -f -n 5 /var/log/syslog
+tail -f /var/log/messages
+grep -i error /var/log/messages
+awk '{print $1}' /var/log/httpd/access_log* | sort | uniq -c | sort
+
+# Logrotate
+cat /etc/logrotate.conf
+ls /etc/logrotate.d
+sudo logrotate -d /etc/logrotate.conf   # dry-run
+sudo logrotate -f /etc/logrotate.conf   # force
+
+########################################
+# 4. DISK, STORAGE, FILESYSTEMS
+########################################
+
+# View block devices
+lsblk
+blkid
+df -h
+du -sh .
+du -sh * | sort -h
+
+# Partitioning (interactive, use with care)
+sudo fdisk -l
+sudo fdisk /dev/sdX
+sudo parted /dev/sdX
+
+# Make filesystem (examples – careful!)
+sudo mkfs.ext4 /dev/sdX1
+sudo mkfs.xfs /dev/sdX1
+
+# Mount / unmount
+sudo mount /dev/sdX1 /mnt
+mount | column -t
+cat /etc/fstab
+sudo umount /mnt
+
+# Swap
+swapon -s
+free -h
+
+# LVM (very common in exams)
+sudo pvcreate /dev/sdX1
+sudo vgcreate vgdata /dev/sdX1
+sudo lvcreate -n lvdata -L 10G vgdata
+sudo mkfs.xfs /dev/vgdata/lvdata
+sudo mount /dev/vgdata/lvdata /mnt/data
+
+########################################
+# 5. USERS, GROUPS, PERMISSIONS, ACL
+########################################
+
+# Show identity
+id
+id <user>
+whoami
+who
+last
+
+# User and group management
+sudo useradd <user>
+sudo passwd <user>
+sudo usermod -aG wheel <user>
+sudo groupadd devs
+groups <user>
+
+# Classic permissions
+ls -l
+chmod 755 file
+chmod 644 file
+chmod -R 2775 /var/www
+sudo chown apache:apache /var/www/index.html
+sudo chown -R apache:www /var/www
+sudo chgrp -R www /var/www
+
+# ACLs
+getfacl file
+setfacl -m u:<user>:rw file
+setfacl -x u:<user> file
+
+########################################
+# 6. SECURITY: SUDO, SELINUX, FIREWALL
+########################################
+
+# sudo configuration
+sudo -l
+sudo visudo
+
+# SELinux status
+getenforce
+sestatus
+sudo setenforce 0        # permissive
+sudo setenforce 1        # enforcing
+ps axZ | head
+sudo restorecon -Rv /var/www
+sudo semanage port -l | grep http
+
+# Firewalld (Fedora/RHEL)
+sudo firewall-cmd --state
+sudo firewall-cmd --get-zones
+sudo firewall-cmd --list-all
+sudo firewall-cmd --add-service=ssh --permanent
+sudo firewall-cmd --add-port=8080/tcp --permanent
+sudo firewall-cmd --reload
+
+########################################
+# 7. PROCESSES, SYSTEMD, BOOT
+########################################
+
+# Process listing
+ps -A
+ps -e
+ps aux | less
+pgrep sshd
+pkill sshd
+pstree
+ps -eLF
+ps axms
+ps axZ
+
+# Top-like tools
+top
+top -b -n1 > /tmp/process.log
+htop
+free -h
+vmstat 1
+iostat
+sar -u 1 5
+
+# systemctl (services and targets)
+systemctl status sshd
+systemctl start sshd
+systemctl stop sshd
+systemctl restart sshd
+systemctl reload sshd
+systemctl enable sshd
+systemctl disable sshd
+systemctl list-units --type=service
+systemctl list-timers
+systemctl is-enabled sshd
+systemctl get-default
+systemctl set-default graphical.target
+systemctl isolate multi-user.target
+journalctl -u sshd -f
+
+# Boot troubles (common exam theme)
+journalctl -b
+journalctl -b -1
+systemctl --failed
+
+########################################
+# 8. NETWORKING & REMOTE ACCESS
+########################################
+
+# Basic info
+ip a
+ip link
+ip r
+nmcli device status
+nmcli connection show
+
+# Testing connectivity
+ping -c 4 8.8.8.8
+ping -c 4 example.com
+traceroute example.com
+
+# DNS tools
+dig example.com
+nslookup example.com
+host example.com
+
+# Ports and sockets
+ss -tulnp
+ss -ltn
+sudo lsof -i
+sudo lsof -i :22
+netstat -tulnp
+netstat -a | grep <port>
+
+# SSH
+ssh <user>@host
+ssh -i key.pem <user>@host
+scp file <user>@host:/path/
+rsync -avz /src/ <user>@host:/dst/
+ssh-copy-id <user>@host
+
+########################################
+# 9. SOFTWARE & PACKAGE MANAGEMENT
+########################################
+
+# dnf / rpm (Fedora, RHEL 8+)
+sudo dnf search nginx
+sudo dnf info nginx
+sudo dnf install nginx
+sudo dnf remove nginx
+sudo dnf update
+sudo dnf upgrade --refresh
+sudo dnf list installed
+rpm -qa | head
+rpm -qi bash
+
+# tar, gzip, bzip2, xz
+tar czvf archive.tar.gz dir/
+tar xzvf archive.tar.gz
+tar cjvf archive.tar.bz2 dir/
+gzip file
+gunzip file.gz
+xz file
+unxz file.xz
+
+########################################
+# 10. SHELL SCRIPTING ESSENTIALS
+########################################
+
+# Shebang line and variables
+#!/usr/bin/env bash
+NAME="world"
+echo "Hello, $NAME"
+
+# Positional parameters
+echo "Script name: $0"
+echo "First arg:  $1"
+echo "All args:   $@"
+
+# If / else
+if [ -f "/etc/passwd" ]; then
+  echo "/etc/passwd exists"
+else
+  echo "/etc/passwd missing"
+fi
+
+# For loop
+for u in $(cut -d: -f1 /etc/passwd); do
+  echo "User: $u"
+done
+
+# While loop
+count=0
+while [ "$count" -lt 3 ]; do
+  echo "Count: $count"
+  count=$((count+1))
+done
+
+# Functions
+say_hello() {
+  echo "Hello, $1"
+}
+say_hello "Linux+"
+
+# Case statement
+read -r answer <<EOF
+y
+EOF
+
+case "$answer" in
+  y|Y) echo "Yes";;
+  n|N) echo "No";;
+  *)   echo "Unknown";;
+esac
+
+########################################
+# 11. CONTAINERS & ORCHESTRATION (BASICS)
+########################################
+
+# Podman or Docker (Fedora often uses podman)
+podman images
+podman ps
+podman pull alpine
+podman run --rm -it alpine sh
+podman run -d --name web -p 8080:80 nginx
+podman logs web
+podman exec -it web /bin/bash
+podman stop web
+podman rm web
+
+# Docker equivalents (if Docker is installed)
+docker images
+docker ps
+docker pull alpine
+docker run --rm -it alpine sh
+
+# Kubernetes quick check
+kubectl get nodes
+kubectl get pods -A
+kubectl describe pod <pod>
+kubectl logs <pod>
+kubectl apply -f deployment.yaml
+kubectl delete -f deployment.yaml
+
+
+########################################
+# 12. TROUBLESHOOTING CHECKLIST (EXPANDED)
+########################################
+
+############################
+# STORAGE & DISK USAGE
+############################
+
+# Check filesystem usage
+df -h
+df -i                     # inode usage (important for web servers)
+mount | column -t
+
+# Find largest directories (root, /var, /opt)
+du -sh / | sort -h
+du -sh /* | sort -h
+du -sh /var/* | sort -h
+du -sh /opt/* | sort -h
+du -sh /home/* | sort -h
+
+# Top 20 biggest files
+find / -type f -printf "%s %p\n" 2>/dev/null | sort -n | tail -20
+find /var -type f -size +500M
+
+# Identify journal logs filling disk
+journalctl --disk-usage
+sudo journalctl --vacuum-size=500M
+sudo journalctl --vacuum-time=7d
+
+# Clean system logs (use with care)
+sudo rm -f /var/log/*.gz
+sudo rm -f /var/log/*-????????
+sudo truncate -s 0 /var/log/messages
+sudo truncate -s 0 /var/log/secure
+
+# Clean package cache
+sudo dnf clean all
+sudo dnf autoremove
+
+# Check disks
+lsblk
+blkid
+sudo smartctl -a /dev/sdX
+sudo badblocks -sv /dev/sdX
+
+############################
+# PROCESS / CPU / MEMORY
+############################
+
+# Identify top CPU / memory consumers
+top
+top -o %CPU
+top -o %MEM
+htop
+ps aux --sort=-%cpu | head
+ps aux --sort=-%mem | head
+
+# Per-thread CPU usage
+ps -eLo pid,ppid,tid,pcpu,comm | sort -k4 -r | head
+
+# Zombie processes
+ps aux | awk '{ if ($8 == "Z") print $0 }'
+
+# Memory issues
+free -h
+vmstat 1 5
+cat /proc/meminfo
+dmesg | grep -i oom        # out-of-memory killer events
+
+# Load average
+uptime
+cat /proc/loadavg
+
+# System performance (I/O and CPU)
+iostat -xz 1
+mpstat -P ALL 1
+sar -u 1 5
+sar -r 1 5
+
+############################
+# NETWORK & FIREWALL ISSUES
+############################
+
+# Interfaces and routes
+ip a
+ip r
+nmcli device status
+nmcli connection show
+
+# Connectivity tests
+ping -c 4 gateway
+ping -c 4 8.8.8.8
+ping -c 4 example.com
+traceroute example.com
+
+# DNS issues
+dig example.com
+dig @8.8.8.8 example.com
+host example.com
+nslookup example.com
+
+# Ports & sockets
+ss -tulnp
+sudo ss -ltnp | grep :<port>
+sudo lsof -i
+sudo lsof -i :<port>
+
+# Find process occupying a port
+sudo fuser <port>/tcp
+sudo fuser -v <port>/tcp
+sudo kill -9 $(sudo fuser <port>/tcp)
+
+# Firewalld debugging
+sudo firewall-cmd --state
+sudo firewall-cmd --list-all
+sudo firewall-cmd --list-services
+sudo firewall-cmd --list-ports
+sudo firewall-cmd --get-active-zones
+sudo firewall-cmd --add-port=8080/tcp --permanent
+sudo firewall-cmd --reload
+
+# SELinux possibly blocking network / services
+sudo ausearch -m avc -ts recent
+sudo journalctl -t setroubleshoot
+sudo setenforce 0   # quick test only (do not leave disabled)
+
+############################
+# LOG ANALYSIS (grep, awk, journalctl)
+############################
+
+# Find errors using grep
+grep -i error /var/log/messages
+grep -i fail /var/log/messages
+grep -i denied /var/log/*
+
+# Grep with context (3 lines before and after)
+grep -i -A3 -B3 error /var/log/messages
+
+# Count occurrences
+grep -i error /var/log/messages | wc -l
+
+# Using awk to extract patterns
+awk '/error/ {print}' /var/log/messages
+awk '{print $1,$2,$5}' /var/log/messages | head
+awk '/sshd/ {print $0}' /var/log/secure
+
+# Monitor logs in real-time
+tail -f /var/log/messages
+tail -f /var/log/secure
+journalctl -f
+
+# Journal advanced
+journalctl -u sshd
+journalctl -u NetworkManager
+journalctl -k
+journalctl -p err -b
+journalctl --since "30 min ago"
+
+############################
+# USER ACCESS / AUTH FAILURES
+############################
+
+# Who is logged in
+who
+w
+last
+lastb                            # failed login attempts
+
+# Verify user & groups
+id <user>
+groups <user>
+
+# Permissions & ACL
+ls -l file
+getfacl file
+setfacl -m u:<user>:rw file
+
+# sudo issues
+sudo -l
+sudo visudo
+tail -n 50 /var/log/secure | grep sudo
+
+# SSH authentication logs
+sudo journalctl -u sshd
+sudo journalctl -u sshd --since "10 min ago"
+sudo grep -i ssh /var/log/secure
+
+############################
+# PORT / SOCKET TROUBLESHOOTING
+############################
+
+# What is listening?
+ss -tulnp
+sudo ss -ltnp | head
+
+# Who uses this port?
+sudo lsof -i :22
+sudo fuser 22/tcp
+
+# Hung sockets / TIME_WAIT floods
+ss -s
+
+############################
+# SYSTEMD & SERVICE DEBUGGING
+############################
+
+# Failed units
+systemctl --failed
+
+# Check unit status
+systemctl status <service>
+
+# View startup logs
+journalctl -b
+journalctl -b -1          # previous boot
+journalctl -u <service>
+
+# Restart or reload
+sudo systemctl restart <service>
+sudo systemctl reload <service>
+
+# Autostart / enable
+sudo systemctl enable <service>
+sudo systemctl disable <service>
+
+# Analyze boot issues
+systemd-analyze
+systemd-analyze blame
+systemd-analyze critical-chain
+
+# Debug unit file
+systemctl cat <service>
+systemctl show <service>
+
+# Reload systemd daemon after modifications
+sudo systemctl daemon-reload
+
+############################
+# BOOT & KERNEL ISSUES
+############################
+
+# Kernel messages
+dmesg | tail
+dmesg | grep -i error
+dmesg | grep -i fail
+
+# Dracut/initramfs rebuild (Fedora)
+sudo dracut -f
+
+# Grub config (BIOS-style path; adjust for UEFI if needed)
+sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+
+# Check bootloader entries
+sudo awk -F\' '/menuentry / {print $2}' /boot/grub2/grub.cfg
+
+############################
+# FILE CORRUPTION / PERMISSION FIX
+############################
+
+# Rebuild SELinux contexts
+sudo restorecon -Rv /
+
+# Fix permissions on web directory
+sudo find /var/www -type d -exec chmod 2775 {} \;
+sudo find /var/www -type f -exec chmod 0664 {} \;
+
+# Check filesystem health (unmounted partitions only)
+sudo fsck -f /dev/sdX1
+
+############################
+# PACKAGE & OS ISSUES
+############################
+
+# DNF/YUM troubleshooting
+sudo dnf clean all
+sudo dnf repolist
+sudo dnf check
+sudo dnf check-update
+sudo dnf distro-sync
+
+# Check corrupted packages
+sudo rpm -Va
+
+# Journal errors related to packages
+journalctl -t dnf
+journalctl -t rpm
+
+############################
+# KILLING STUCK PROCESSES
+############################
+
+# Normal kill
+kill PID
+
+# Force kill
+kill -9 PID
+
+# Kill by name
+pkill nginx
+pkill -9 java
+
+# Kill all processes for a user
+pkill -u <user>
+
+
+########################################
+# 13. GIT & AUTOMATION BASICS
+########################################
+
+# Git essentials
+git init
+git clone <repo>
+git status
+git add file
+git commit -m "message"
+git log --oneline --graph
+git pull
+git push
+git branch
+git checkout -b feature
+
+# Simple cron job
+crontab -e
+# m h dom mon dow command
+# 0 2 * * * /usr/local/bin/backup.sh
+
+########################################
+# 14. POSTGRESQL QUICK COMMANDS
+########################################
+
+# Switch to postgres user and open psql
+sudo -i -u postgres
+psql
+
+# psql meta-commands (inside psql)
+\l                     -- list databases
+\c dbname              -- connect to db
+\dt                    -- list tables
+\dn                    -- list schemas
+\du                    -- list roles
+\q                     -- quit
+
+# Basic SQL
+CREATE DATABASE appdb;
+CREATE USER appuser WITH PASSWORD 'secret';
+GRANT ALL PRIVILEGES ON DATABASE appdb TO appuser;
