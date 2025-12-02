@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Replace place-holders like <user>, <file>, <service>, <device>, <port>, <repo> as needed.
+# Replace place-holders like <user>, <file>,
+# <service>, <device>, <port>, <repo> as needed.
 
 ########################################
 # 0. SHELL BASICS
@@ -120,7 +121,8 @@ journalctl -u sshd     # per-service logs
 tail -f -n 5 /var/log/syslog
 tail -f /var/log/messages
 grep -i error /var/log/messages
-awk '{print $1}' /var/log/httpd/access_log* | sort | uniq -c | sort
+awk '{print $1}' /var/log/httpd/access_log* \
+ | sort | uniq -c | sort
 
 # Logrotate
 cat /etc/logrotate.conf
@@ -428,7 +430,8 @@ du -sh /opt/* | sort -h
 du -sh /home/* | sort -h
 
 # Top 20 biggest files
-find / -type f -printf "%s %p\n" 2>/dev/null | sort -n | tail -20
+find / -type f -printf "%s %p\n" 2>/dev/null \
+ | sort -n | tail -20
 find /var -type f -size +500M
 
 # Identify journal logs filling disk
@@ -465,7 +468,8 @@ ps aux --sort=-%cpu | head
 ps aux --sort=-%mem | head
 
 # Per-thread CPU usage
-ps -eLo pid,ppid,tid,pcpu,comm | sort -k4 -r | head
+ps -eLo pid,ppid,tid,pcpu,comm \
+ | sort -k4 -r | head
 
 # Zombie processes
 ps aux | awk '{ if ($8 == "Z") print $0 }'
@@ -474,7 +478,7 @@ ps aux | awk '{ if ($8 == "Z") print $0 }'
 free -h
 vmstat 1 5
 cat /proc/meminfo
-dmesg | grep -i oom        # out-of-memory killer events
+dmesg | grep -i oom # out-of-memory killer events
 
 # Load average
 uptime
@@ -531,7 +535,8 @@ sudo firewall-cmd --reload
 # SELinux possibly blocking network / services
 sudo ausearch -m avc -ts recent
 sudo journalctl -t setroubleshoot
-sudo setenforce 0   # quick test only (do not leave disabled)
+# quick test only (do not leave disabled)
+sudo setenforce 0   
 
 ############################
 # LOG ANALYSIS (grep, awk, journalctl)
@@ -660,7 +665,8 @@ sudo dracut -f
 sudo grub2-mkconfig -o /boot/grub2/grub.cfg
 
 # Check bootloader entries
-sudo awk -F\' '/menuentry / {print $2}' /boot/grub2/grub.cfg
+sudo awk -F\' '/menuentry / {print $2}' \
+ /boot/grub2/grub.cfg
 
 ############################
 # FILE CORRUPTION / PERMISSION FIX
