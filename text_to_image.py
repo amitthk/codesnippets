@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 
 # Configuration
-NUM_COLUMNS = 8
+NUM_COLUMNS = 12
 INPUT_FILE = "linux.org"
 OUTPUT_FILE = "linux_commands_wallpaper_dark.png"
 

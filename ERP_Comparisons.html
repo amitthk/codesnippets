@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ERP_summary</title>
+	<style>
+		/* Basic styles for readability */
+		body {
+			font-family: sans-serif;
+			max-width: 800px;
+			margin: 2em auto;
+			padding: 0 1em;
+			line-height: 1.6;
+		}
+		img { max-width: 100%; height: auto; }
+		pre { background-color: #f4f4f4; padding: 1em; overflow-x: auto; }
+		code { font-family: monospace; }
+	</style>
+</head>
+<body>
+	<p><strong>THE MANUFACTURING COMPANY CORE ERP FUNCTIONS</strong></p>
+<p><strong>Inventory Management Module</strong></p>
+<ul>
+<li>Tracks stock levels, locations, and movements across multiple warehouses in real-time. Manages SKUs, serial numbers, and batch tracking for full product traceability. Includes cycle counting capabilities, automated reorder points, and low-stock alerts to prevent stockouts. Supports multiple warehouse locations with inter-warehouse transfer functionality.</li>
+</ul>
+<p><strong>Purchasing Module</strong></p>
+<ul>
+<li>Manages vendor relationships, pricing agreements, and supplier performance metrics. Creates and processes purchase requisitions and purchase orders with multi-level approval workflows. Tracks order status from creation through receipt and includes automated three-way matching between purchase orders, receipts, and invoices.</li>
+</ul>
+<p><strong>Manufacturing/Production Module</strong></p>
+<ul>
+<li>Manages bills of materials (BOMs) defining components and raw materials needed for finished goods. Controls production orders, work orders, and job scheduling across production lines. Tracks work-in-process inventory and labor costs, with quality control checkpoints built into production workflows. Includes capacity planning and shop floor control functionality.</li>
+</ul>
+<p><strong>Sales Order Processing Module</strong></p>
+<ul>
+<li>Creates and manages customer sales orders with pricing, discounts, and terms management. Performs real-time inventory allocation and availability-to-promise calculations. Generates pick lists, packing slips, and shipping documentation while tracking order fulfillment status from quote to delivery.</li>
+</ul>
+<p><strong>Purchase Order Processing Module</strong></p>
+<ul>
+<li>Automates PO creation from approved requisitions or reorder points with vendor selection based on pricing and lead times. Manages receiving processes including partial receipts and quality inspection holds. Handles returns to vendors, discrepancies, and integrates with accounts payable for invoice processing.</li>
+</ul>
+<p><strong>Reporting and Analytics Module</strong></p>
+<ul>
+<li>Generates inventory valuation reports, turnover analysis, and aging reports for both stock and orders. Creates purchasing reports including spend analysis, vendor performance, and purchase price variance. Provides production efficiency metrics, manufacturing cost analysis, and yield reports alongside sales performance dashboards showing order trends, customer analysis, and revenue reporting.</li>
+</ul>
+<p>I’ll walk you through a comprehensive story of how a manufacturing company operates in JD Edwards EnterpriseOne, showing the key tables involved at each stage.</p>
+<p><strong>THE MANUFACTURING COMPANY JOURNEY IN JDE</strong></p>
+<p><strong>1. MASTER DATA SETUP</strong></p>
+<p>Before any transactions occur, the company establishes foundational data:</p>
+<ul>
+<li><strong>F0101 - Address Book Master</strong>: Stores all business partners including customers, suppliers, employees, and company locations</li>
+<li><strong>F4101 - Item Master</strong>: Contains all item information including raw materials, components, work-in-process, and finished goods with specifications, costs, and attributes</li>
+<li><strong>F4102 - Item Branch/Plant</strong>: Defines item behavior at specific branches including lead times, order policies, and planning data</li>
+<li><strong>F41021 - Item Location</strong>: Tracks bin locations within warehouses for each item</li>
+<li><strong>F0006 - Business Unit Master</strong>: Stores branch/plant information and organizational structure</li>
+<li><strong>F0101 - Supplier Records</strong>: Vendor master data with payment terms, contact info, and certifications</li>
+</ul>
+<p><strong>2. SALES ORDER ENTRY - THE CUSTOMER ORDERS</strong></p>
+<p>A customer places an order for 1,000 units of finished product “WIDGET-A”:</p>
+<ul>
+<li><strong>F4201 - Sales Order Header</strong>: Creates the sales order header with customer information, order date, requested delivery date, and shipping instructions</li>
+<li><strong>F4211 - Sales Order Detail</strong>: Records line item details including item number, quantity ordered (1,000), unit price, promised date, and line type</li>
+<li><strong>F4209 - Sales Order Transaction History</strong>: Logs every status change and activity on the sales order</li>
+<li><strong>F4941 - Sales Detail Work File</strong>: Temporary staging for order processing before commitment</li>
+</ul>
+<p>During order entry, JDE performs availability check:</p>
+<ul>
+<li><strong>F41021 - Item Location</strong>: Checks on-hand quantities by location</li>
+<li><strong>F4111 - Item Ledger</strong>: Verifies current inventory balances</li>
+</ul>
+<p><strong>3. MATERIAL REQUIREMENTS PLANNING (MRP)</strong></p>
+<p>The system determines that inventory is insufficient and triggers manufacturing:</p>
+<ul>
+<li><strong>F3411 - MRP/MPS Messages</strong>: Generates planned orders suggesting production of 1,000 WIDGET-A units</li>
+<li><strong>F3412 - MPS/MRP Detail Message</strong>: Provides detailed planning recommendations</li>
+<li><strong>F3460 - DRP/MPS/MRP Exception Messages</strong>: Highlights issues like capacity constraints or material shortages</li>
+</ul>
+<p>The planner reviews and firms the planned order:</p>
+<ul>
+<li><strong>F4311 - Purchase Order Header</strong> (for purchased items): Would create POs for raw materials</li>
+<li><strong>F4801 - Work Order Master File</strong>: Creates manufacturing work order for WIDGET-A</li>
+</ul>
+<p><strong>4. BILL OF MATERIALS - WHAT’S NEEDED</strong></p>
+<p>The system references the product structure:</p>
+<ul>
+<li><strong>F3002 - Bill of Material Master</strong>: Defines that WIDGET-A requires 2 units of PART-B, 3 units of PART-C, and 1 unit of ASSEMBLY-D</li>
+<li><strong>F30026 - Bill of Material Configurator</strong>: Handles configurable items if applicable</li>
+<li><strong>F0005 - User Defined Codes</strong>: Stores BOM types (manufactured, phantom, planning)</li>
+</ul>
+<p><strong>5. PURCHASING RAW MATERIALS</strong></p>
+<p>MRP identifies shortages of PART-B and PART-C, creating purchase requisitions:</p>
+<ul>
+<li><strong>F43081 - Purchase Requisition Header</strong>: Creates requisition for needed materials</li>
+<li><strong>F43081 - Purchase Requisition Detail</strong>: Line items for each material shortage</li>
+</ul>
+<p>After approval, requisitions convert to purchase orders:</p>
+<ul>
+<li><strong>F4301 - Purchase Order Header</strong>: Creates PO to supplier with terms, buyer, and delivery information</li>
+<li><strong>F4311 - Purchase Order Detail</strong>: Line items showing quantities, prices, and delivery dates for PART-B and PART-C</li>
+<li><strong>F43199 - Purchase Order Tag File</strong>: Additional PO information and user-defined fields</li>
+<li><strong>F43121 - Purchase Order Receiver Summary</strong>: Tracks receiving status</li>
+</ul>
+<p><strong>6. RECEIVING PURCHASED MATERIALS</strong></p>
+<p>Raw materials arrive at the warehouse:</p>
+<ul>
+<li><strong>F4211 - Sales Order Detail</strong>: Updated with receipt transactions (using this table for PO receipts as well in some versions)</li>
+<li><strong>F43121 - PO Receiver File</strong>: Records receipt details including quantity received, date, lot numbers, and quality inspection results</li>
+<li><strong>F4311 - Purchase Order Detail</strong>: Updates received quantities and remaining open quantity</li>
+<li><strong>F0911 - Account Ledger</strong>: Creates accounting entries for received inventory value</li>
+</ul>
+<p>Materials are put away:</p>
+<ul>
+<li><strong>F4111 - Item Ledger</strong>: Records inventory receipt transaction increasing on-hand balance</li>
+<li><strong>F41112 - Item Location Detail</strong>: Updates specific bin locations where materials are stored</li>
+<li><strong>F0902 - Account Balances</strong>: Updates inventory asset values</li>
+</ul>
+<p><strong>7. WORK ORDER PROCESSING - MANUFACTURING BEGINS</strong></p>
+<p>The production supervisor releases the work order:</p>
+<ul>
+<li><strong>F4801 - Work Order Master</strong>: Status changes from “planned” to “released”</li>
+<li><strong>F3105 - Work Order Routing</strong>: Defines manufacturing operations sequence (cutting, assembly, finishing, quality check)</li>
+<li><strong>F3112 - Employee Time and Attendance</strong>: Records labor hours by operation and employee</li>
+</ul>
+<p>Materials are issued to the shop floor:</p>
+<ul>
+<li><strong>F3111 - Work Order Parts List</strong>: Lists components required (PART-B, PART-C, ASSEMBLY-D)</li>
+<li><strong>F3121 - Issue Material</strong>: Records material issues from inventory to work order</li>
+<li><strong>F4111 - Item Ledger</strong>: Reduces raw material inventory and increases work-in-process inventory</li>
+<li><strong>F0902 - Account Balances</strong>: Updates inventory accounts (reduces raw materials, increases WIP)</li>
+</ul>
+<p><strong>8. PRODUCTION OPERATIONS</strong></p>
+<p>Workers complete manufacturing operations:</p>
+<ul>
+<li><strong>F31122 - Time Entry Detail</strong>: Records labor hours, machine time, and operation completion</li>
+<li><strong>F31122 - Labor Reporting</strong>: Captures direct and indirect labor costs</li>
+<li><strong>F1302 - Lot Master</strong>: Creates lot numbers for traceability if lot control is enabled</li>
+<li><strong>F3115 - Shop Floor Scheduling</strong>: Updates operation status and actual vs. planned times</li>
+</ul>
+<p><strong>9. WORK ORDER COMPLETION</strong></p>
+<p>Finished goods are completed:</p>
+<ul>
+<li><strong>F31114 - Work Order Completions</strong>: Records completion of 1,000 units of WIDGET-A</li>
+<li><strong>F4111 - Item Ledger</strong>: Creates receipt transaction for finished goods, reduces WIP</li>
+<li><strong>F0902 - Account Balances</strong>: Relieves WIP account and increases finished goods inventory</li>
+<li><strong>F4105 - Item Cost File</strong>: Updates standard or actual costs for the manufactured item</li>
+<li><strong>F3102 - Manufacturing Cost Summary</strong>: Accumulates material, labor, and overhead costs</li>
+<li><strong>F4801 - Work Order Master</strong>: Closes work order when all quantities are completed</li>
+</ul>
+<p><strong>10. QUALITY INSPECTION</strong></p>
+<p>Before shipping, products undergo quality checks:</p>
+<ul>
+<li><strong>F3711 - Quality Management Results</strong>: Records inspection results and conformance data</li>
+<li><strong>F3701 - Test Master</strong>: Defines quality tests and acceptance criteria</li>
+<li><strong>F4111 - Item Ledger</strong>: May move inventory from inspection hold to available status</li>
+</ul>
+<p><strong>11. SALES ORDER FULFILLMENT</strong></p>
+<p>Now that inventory is available, the sales order can be fulfilled:</p>
+<ul>
+<li><strong>F4211 - Sales Order Detail</strong>: Status updates to “pick released”</li>
+<li><strong>F4600 - Pick Slips Header</strong>: Generates pick list for warehouse</li>
+<li><strong>F46011 - Pick Slips Detail</strong>: Shows specific items, quantities, and locations to pick</li>
+<li><strong>F4611 - Shipment Header</strong>: Creates shipment record when items are packed</li>
+<li><strong>F4611 - Shipment Detail</strong>: Links shipped items to sales orders</li>
+</ul>
+<p>Inventory is shipped:</p>
+<ul>
+<li><strong>F4211 - Sales Order Detail</strong>: Updates shipped quantities and status</li>
+<li><strong>F4111 - Item Ledger</strong>: Records inventory reduction for shipped goods</li>
+<li><strong>F0911 - Account Ledger</strong>: Creates revenue and cost of goods sold entries</li>
+<li><strong>F03B11 - Customer Ledger</strong>: Posts customer invoice</li>
+</ul>
+<p><strong>12. INVOICING AND ACCOUNTS RECEIVABLE</strong></p>
+<ul>
+<li><strong>F42199 - Sales Order History</strong>: Archives completed order details</li>
+<li><strong>F03B11 - Customer Ledger</strong>: Shows outstanding customer balance</li>
+<li><strong>F03B13 - Invoice Transactions</strong>: Detailed invoice line items</li>
+<li><strong>F03B14 - Payment Information</strong>: Tracks when customer pays</li>
+</ul>
+<p><strong>13. ACCOUNTS PAYABLE - PAYING SUPPLIERS</strong></p>
+<p>For the raw materials purchased earlier:</p>
+<ul>
+<li><strong>F0411 - Accounts Payable Ledger</strong>: Records supplier invoices</li>
+<li><strong>F0413 - A/P Detail</strong>: Line item details of supplier invoices</li>
+<li><strong>F0414 - Payment Header</strong>: Creates payment batch when paying suppliers</li>
+<li><strong>F0418 - Payment Detail</strong>: Individual payment transactions</li>
+</ul>
+<p>Three-way matching occurs:</p>
+<ul>
+<li><strong>F4311 - Purchase Order Detail</strong>: Original PO quantities and prices</li>
+<li><strong>F43121 - PO Receiver File</strong>: What was actually received</li>
+<li><strong>F0411 - A/P Ledger</strong>: Invoice amounts for matching validation</li>
+</ul>
+<p><strong>14. INVENTORY MANAGEMENT - ONGOING</strong></p>
+<p>Throughout all processes, continuous inventory management:</p>
+<ul>
+<li><strong>F4111 - Item Ledger</strong>: Every single inventory transaction (receipts, issues, transfers, adjustments)</li>
+<li><strong>F41112 - Item Ledger Secondary</strong>: Additional transaction details</li>
+<li><strong>F4115 - Inventory by Location</strong>: Current on-hand by location</li>
+<li><strong>F41112 - Item Location Detail</strong>: Detailed bin-level inventory</li>
+<li><strong>F4141 - Cycle Count</strong>: Physical inventory counting processes</li>
+<li><strong>F41051 - Inventory Constants</strong>: System-wide inventory parameters</li>
+</ul>
+<p><strong>15. COSTING AND ACCOUNTING</strong></p>
+<p>Financial integration throughout:</p>
+<ul>
+<li><strong>F4105 - Item Cost File</strong>: Maintains current costs for all items (standard, average, FIFO)</li>
+<li><strong>F30026 - Cost Component Add-Ons</strong>: Detailed cost breakdowns (material, labor, burden, overhead)</li>
+<li><strong>F0902 - Account Balances</strong>: General ledger balances by account</li>
+<li><strong>F0911 - Account Ledger</strong>: Detailed transaction-level accounting entries</li>
+<li><strong>F0901 - Account Master</strong>: Chart of accounts structure</li>
+</ul>
+<p><strong>16. REPORTING AND ANALYTICS</strong></p>
+<p>Management reviews performance using data from:</p>
+<ul>
+<li><strong>F4211 - Sales Order Detail</strong>: Sales order backlog and fulfillment metrics</li>
+<li><strong>F42199 - Sales Order History</strong>: Historical sales analysis</li>
+<li><strong>F4111 - Item Ledger</strong>: Inventory turnover and movement analysis</li>
+<li><strong>F3102 - Work Order Summary</strong>: Manufacturing variances and efficiency</li>
+<li><strong>F31122 - Time Entry</strong>: Labor utilization and productivity</li>
+<li><strong>F4311 - Purchase Order Detail</strong>: Purchasing spend analysis</li>
+<li><strong>F0902/F0911 - Financial Tables</strong>: P&amp;L, balance sheet, and cash flow reporting</li>
+</ul>
+<p><strong>KEY INTEGRATION POINTS</strong></p>
+<p>The beauty of JDE is how these tables integrate:</p>
+<ul>
+<li><strong>Sales drives manufacturing</strong>: F4211 → F3411 → F4801</li>
+<li><strong>Manufacturing pulls materials</strong>: F4801 → F3111 → F4111</li>
+<li><strong>Purchasing replenishes</strong>: F3411 → F43081 → F4301 → F4111</li>
+<li><strong>Everything hits financials</strong>: All inventory transactions → F0911 → F0902</li>
+<li><strong>Customer satisfaction tracked</strong>: F4201 → F4211 → F42199</li>
+</ul>
+<p><strong>ADDITIONAL SUPPORTING TABLES</strong></p>
+<ul>
+<li><strong>F0005 - User Defined Codes</strong>: System-wide code definitions (order status, item types, etc.)</li>
+<li><strong>F9210 - One World Versions</strong>: User customizations and processing options</li>
+<li><strong>F9860 - Batch Control</strong>: Manages batch processing and posting</li>
+<li><strong>F98741 - Next Numbers</strong>: Controls document numbering sequences</li>
+<li><strong>F0101 - Address Book</strong>: Referenced everywhere for customer/supplier/employee information</li>
+</ul>
+<p>This comprehensive flow shows how a single customer order triggers a cascade of events through purchasing, manufacturing, inventory, and financials—all tracked in JDE’s integrated table structure. Each transaction updates multiple tables simultaneously, maintaining data integrity and providing real-time visibility across the entire enterprise.</p>
+<h2><strong>DYNAMICS 365 FINANCE &amp; SUPPLY CHAIN MANAGEMENT</strong></h2>
+<p><strong>1. MASTER DATA SETUP</strong></p>
+<ul>
+<li><strong>CustTable</strong>: Customer master data (equivalent to F0101 for customers)</li>
+<li><strong>VendTable</strong>: Vendor/supplier master data</li>
+<li><strong>DirPartyTable</strong>: Global address book for all parties (customers, vendors, contacts)</li>
+<li><strong>InventTable</strong>: Item master containing all products, raw materials, and finished goods (equivalent to F4101)</li>
+<li><strong>InventTableModule</strong>: Item setup by module (sales, purchase, inventory)</li>
+<li><strong>InventDim</strong>: Inventory dimensions (site, warehouse, location, batch, serial)</li>
+<li><strong>InventLocation</strong>: Warehouse and location master</li>
+<li><strong>InventSite</strong>: Site/facility master data</li>
+<li><strong>WMSLocation</strong>: Specific warehouse bin locations (equivalent to F41021)</li>
+<li><strong>OMOperatingUnit</strong>: Organizational units and legal entities</li>
+</ul>
+<p><strong>2. SALES ORDER ENTRY</strong></p>
+<ul>
+<li><strong>SalesTable</strong>: Sales order header with customer, dates, and terms (equivalent to F4201)</li>
+<li><strong>SalesLine</strong>: Sales order line items with quantities, prices, and delivery dates (equivalent to F4211)</li>
+<li><strong>SalesQuotationTable</strong>: Sales quotations before conversion to orders</li>
+<li><strong>SalesQuotationLine</strong>: Quote line details</li>
+<li><strong>CustInvoiceJour</strong>: Posted customer invoice header</li>
+<li><strong>CustInvoiceTrans</strong>: Posted invoice line details</li>
+<li><strong>CustTrans</strong>: Customer transactions and balances</li>
+<li><strong>InventTransOrigin</strong>: Links inventory transactions to source documents</li>
+<li><strong>InventTrans</strong>: Inventory transactions for reservations and issues</li>
+</ul>
+<p><strong>3. MATERIAL REQUIREMENTS PLANNING (MRP)</strong></p>
+<ul>
+<li><strong>ReqTrans</strong>: MRP transactions and planned orders (equivalent to F3411)</li>
+<li><strong>ReqPO</strong>: Planned purchase orders</li>
+<li><strong>ReqItemTable</strong>: Item coverage settings and planning parameters</li>
+<li><strong>ReqPlan</strong>: Master planning runs and scenarios</li>
+<li><strong>ReqCalcScheduleItemId</strong>: Scheduling calculation results</li>
+<li><strong>ForecastSales</strong>: Sales forecasts for demand planning</li>
+<li><strong>ReqTransFuturesReference</strong>: Future supply and demand visibility</li>
+<li><strong>ReqTransAction</strong>: Action messages (expedite, postpone, cancel)</li>
+</ul>
+<p><strong>4. BILL OF MATERIALS</strong></p>
+<ul>
+<li><strong>BOMTable</strong>: BOM header information (equivalent to F3002)</li>
+<li><strong>BOM</strong>: BOM line details with components and quantities</li>
+<li><strong>BOMVersion</strong>: BOM versions for effective dating</li>
+<li><strong>BOMCalcTable</strong>: BOM calculation results</li>
+<li><strong>BOMConfigRoute</strong>: Configurable BOM routing</li>
+<li><strong>BOMConsistOf</strong>: BOM composition and structure</li>
+<li><strong>InventBOMJournal</strong>: BOM journal entries for changes</li>
+</ul>
+<p><strong>5. PURCHASING RAW MATERIALS</strong></p>
+<ul>
+<li><strong>PurchReqTable</strong>: Purchase requisition header (equivalent to F43081)</li>
+<li><strong>PurchReqLine</strong>: Purchase requisition line items</li>
+<li><strong>PurchTable</strong>: Purchase order header (equivalent to F4301)</li>
+<li><strong>PurchLine</strong>: Purchase order line details (equivalent to F4311)</li>
+<li><strong>VendInvoiceInfoTable</strong>: Vendor invoice header</li>
+<li><strong>VendInvoiceInfoLine</strong>: Vendor invoice lines</li>
+<li><strong>PurchRFQTable</strong>: Request for quotation header</li>
+<li><strong>PurchRFQLine</strong>: RFQ line items</li>
+<li><strong>VendPurchOrderJour</strong>: Posted purchase order journal</li>
+<li><strong>PurchAgreementHeader</strong>: Purchase agreements and blanket orders</li>
+</ul>
+<p><strong>6. RECEIVING PURCHASED MATERIALS</strong></p>
+<ul>
+<li><strong>PurchParmTable</strong>: Purchase receipt posting header</li>
+<li><strong>PurchParmLine</strong>: Purchase receipt posting lines</li>
+<li><strong>VendPackingSlipJour</strong>: Posted packing slip journal (equivalent to F43121)</li>
+<li><strong>VendPackingSlipTrans</strong>: Packing slip transactions</li>
+<li><strong>InventTrans</strong>: Physical receipt transactions (equivalent to F4111)</li>
+<li><strong>WHSLoadTable</strong>: Inbound load header for warehouse management</li>
+<li><strong>WHSLoadLine</strong>: Inbound load lines</li>
+<li><strong>WHSWorkTable</strong>: Warehouse work orders for putaway</li>
+<li><strong>WMSPickingRoute</strong>: Picking routes and putaway tasks</li>
+</ul>
+<p><strong>7. WORK ORDER PROCESSING - MANUFACTURING</strong></p>
+<ul>
+<li><strong>ProdTable</strong>: Production order header (equivalent to F4801)</li>
+<li><strong>ProdBOM</strong>: Production BOM lines for the work order</li>
+<li><strong>ProdRoute</strong>: Production routing operations (equivalent to F3105)</li>
+<li><strong>ProdJournalBOM</strong>: BOM picking list journal</li>
+<li><strong>ProdJournalRoute</strong>: Route card journal for operations</li>
+<li><strong>ProdJournalTable</strong>: Production journal headers</li>
+<li><strong>ProdJournalTrans</strong>: Production journal transactions</li>
+<li><strong>ProdTableJour</strong>: Posted production journals</li>
+<li><strong>ProdStatusChange</strong>: Production order status history</li>
+</ul>
+<p><strong>8. MATERIAL ISSUES TO PRODUCTION</strong></p>
+<ul>
+<li><strong>InventTransOrigin</strong>: Source document references for inventory</li>
+<li><strong>InventTrans</strong>: Material issue transactions reducing raw materials</li>
+<li><strong>ProdPickListJour</strong>: Posted picking list journal</li>
+<li><strong>ProdPickListTrans</strong>: Picking list line transactions (equivalent to F3121)</li>
+<li><strong>WHSWorkTable</strong>: Warehouse work for material picking</li>
+<li><strong>InventJournalTable</strong>: Inventory movement journal header</li>
+<li><strong>InventJournalTrans</strong>: Inventory movement journal lines</li>
+</ul>
+<p><strong>9. PRODUCTION OPERATIONS AND LABOR</strong></p>
+<ul>
+<li><strong>JmgTermReg</strong>: Time and attendance registrations (equivalent to F31122)</li>
+<li><strong>JmgStampJournalTable</strong>: Time stamp journal header</li>
+<li><strong>JmgStampJournalTrans</strong>: Clock in/out transactions</li>
+<li><strong>ProdRouteJob</strong>: Individual job operations on production orders</li>
+<li><strong>ProdRouteCard</strong>: Route card for operation completion</li>
+<li><strong>JmgProdParameters</strong>: Production parameters and setup</li>
+<li><strong>ProjEmplTrans</strong>: Employee time transactions if using projects</li>
+<li><strong>HcmWorker</strong>: Worker/employee master data</li>
+</ul>
+<p><strong>10. WORK ORDER COMPLETION</strong></p>
+<ul>
+<li><strong>ProdJournalTable</strong>: Report as finished journal header</li>
+<li><strong>ProdJournalTrans</strong>: Completion transactions (equivalent to F31114)</li>
+<li><strong>InventTrans</strong>: Finished goods receipt, WIP reduction</li>
+<li><strong>ProdCostTrans</strong>: Production cost transactions</li>
+<li><strong>InventSettlement</strong>: Cost settlement between issues and receipts</li>
+<li><strong>ProdTableJour</strong>: Posted production order journals</li>
+<li><strong>InventClosing</strong>: Inventory closing transactions</li>
+</ul>
+<p><strong>11. QUALITY MANAGEMENT</strong></p>
+<ul>
+<li><strong>InventQualityOrderTable</strong>: Quality order header (equivalent to F3711)</li>
+<li><strong>InventQualityOrderLine</strong>: Quality order lines</li>
+<li><strong>InventTestTable</strong>: Test definitions (equivalent to F3701)</li>
+<li><strong>InventTestResultTable</strong>: Test results and measurements</li>
+<li><strong>InventQuarantineOrder</strong>: Quarantine order for non-conforming items</li>
+<li><strong>InventTestCorrection</strong>: Corrective actions</li>
+<li><strong>InventTestEmplResponsible</strong>: Quality inspectors assigned</li>
+</ul>
+<p><strong>12. SALES ORDER FULFILLMENT &amp; SHIPPING</strong></p>
+<ul>
+<li><strong>WHSShipmentTable</strong>: Shipment header for warehouse orders</li>
+<li><strong>WHSLoadTable</strong>: Load planning and consolidation</li>
+<li><strong>WHSWorkTable</strong>: Pick, pack, and ship warehouse work</li>
+<li><strong>WMSPickingRoute</strong>: Wave-based picking routes (equivalent to F4600/F46011)</li>
+<li><strong>SalesPackingSlipJour</strong>: Posted packing slip header</li>
+<li><strong>SalesPackingSlipTrans</strong>: Packing slip line transactions</li>
+<li><strong>InventTransOrigin</strong>: Links shipped inventory to sales orders</li>
+<li><strong>InventTrans</strong>: Inventory reduction for shipped goods</li>
+</ul>
+<p><strong>13. INVOICING AND ACCOUNTS RECEIVABLE</strong></p>
+<ul>
+<li><strong>CustInvoiceJour</strong>: Posted customer invoice header (equivalent to F03B11)</li>
+<li><strong>CustInvoiceTrans</strong>: Posted invoice transactions (equivalent to F03B13)</li>
+<li><strong>CustTrans</strong>: Customer ledger entries</li>
+<li><strong>CustSettlement</strong>: Payment settlements against invoices</li>
+<li><strong>CustPaymEntry</strong>: Customer payment entry</li>
+<li><strong>CustCollectionsPool</strong>: Collections pool for overdue accounts</li>
+<li><strong>SalesInvoiceJour</strong>: Sales invoice journal header</li>
+<li><strong>CustInterestJour</strong>: Interest calculations for late payments</li>
+</ul>
+<p><strong>14. ACCOUNTS PAYABLE</strong></p>
+<ul>
+<li><strong>VendTrans</strong>: Vendor ledger transactions (equivalent to F0411)</li>
+<li><strong>VendInvoiceJour</strong>: Posted vendor invoice journal</li>
+<li><strong>VendInvoiceTrans</strong>: Vendor invoice line details (equivalent to F0413)</li>
+<li><strong>VendPaymProposal</strong>: Payment proposal for vendor payments</li>
+<li><strong>VendSettlement</strong>: Payment settlement records</li>
+<li><strong>VendPaymEntry</strong>: Vendor payment entries (equivalent to F0414)</li>
+<li><strong>VendInvoiceInfoTable</strong>: Invoice approval workflow</li>
+<li><strong>VendInvoiceMatchingLine</strong>: Three-way matching results</li>
+</ul>
+<p><strong>15. INVENTORY MANAGEMENT</strong></p>
+<ul>
+<li><strong>InventTrans</strong>: All inventory transactions (equivalent to F4111)</li>
+<li><strong>InventTransOrigin</strong>: Transaction origin and traceability</li>
+<li><strong>InventSum</strong>: On-hand inventory by dimensions (equivalent to F4115)</li>
+<li><strong>InventDimParm</strong>: Dimension parameters for transactions</li>
+<li><strong>InventJournalTable</strong>: Inventory adjustment journal header (equivalent to F4141)</li>
+<li><strong>InventJournalTrans</strong>: Inventory journal transactions</li>
+<li><strong>InventTransferTable</strong>: Transfer order header</li>
+<li><strong>InventTransferLine</strong>: Transfer order lines</li>
+<li><strong>WHSInventStatus</strong>: Inventory status (available, blocked, quality inspection)</li>
+</ul>
+<p><strong>16. COSTING AND ACCOUNTING</strong></p>
+<ul>
+<li><strong>InventItemPrice</strong>: Item cost records (equivalent to F4105)</li>
+<li><strong>InventCostTrans</strong>: Inventory cost transactions</li>
+<li><strong>InventSettlement</strong>: Cost settlements and adjustments</li>
+<li><strong>LedgerJournalTable</strong>: General ledger journal header</li>
+<li><strong>LedgerJournalTrans</strong>: General ledger transactions (equivalent to F0911)</li>
+<li><strong>GeneralJournalAccountEntry</strong>: Subledger to GL posting</li>
+<li><strong>GeneralJournalEntry</strong>: Journal entry header</li>
+<li><strong>MainAccount</strong>: Chart of accounts (equivalent to F0901)</li>
+<li><strong>DimensionAttributeValueCombination</strong>: Financial dimension combinations</li>
+<li><strong>InventValueReport</strong>: Inventory valuation reports</li>
+</ul>
+<p><strong>17. WAREHOUSE MANAGEMENT (ADVANCED)</strong></p>
+<ul>
+<li><strong>WHSLoadTable</strong>: Load planning and scheduling</li>
+<li><strong>WHSWave</strong>: Wave processing for pick/pack operations</li>
+<li><strong>WHSContainerTable</strong>: Container/pallet management</li>
+<li><strong>WHSWorkTable</strong>: Warehouse work creation and execution</li>
+<li><strong>WHSLocationDirective</strong>: Location directives for putaway/picking</li>
+<li><strong>WHSWarehouseReservationHierarchy</strong>: Reservation hierarchy</li>
+<li><strong>WHSMobileDeviceQueue</strong>: Mobile device task queues</li>
+</ul>
+<p><strong>18. REPORTING AND ANALYTICS</strong></p>
+<ul>
+<li><strong>CustStatistics</strong>: Customer sales statistics</li>
+<li><strong>VendStatistics</strong>: Vendor purchase statistics</li>
+<li><strong>InventValueReportStorage</strong>: Inventory value report storage</li>
+<li><strong>ProdCalcTrans</strong>: Production calculation transactions</li>
+<li><strong>LedgerTrialBalanceEntity</strong>: Trial balance data</li>
+<li><strong>BudgetTransactionCode</strong>: Budget vs. actual comparisons</li>
+</ul>
+<hr>
+<h2><strong>ODOO ERP EQUIVALENTS</strong></h2>
+<p><strong>1. MASTER DATA SETUP</strong></p>
+<ul>
+<li><strong>res.partner</strong>: Universal partner model for customers, vendors, employees, contacts (equivalent to F0101/DirPartyTable)</li>
+<li><strong>product.product</strong>: Product variants and specific items (equivalent to F4101/InventTable)</li>
+<li><strong>product.template</strong>: Product templates with common attributes</li>
+<li><strong>product.category</strong>: Product categorization hierarchy</li>
+<li><strong>stock.location</strong>: Warehouse locations and bins (equivalent to F41021/WMSLocation)</li>
+<li><strong>stock.warehouse</strong>: Warehouse master data</li>
+<li><strong>stock.picking.type</strong>: Operation types (receipts, deliveries, internal transfers)</li>
+<li><strong>res.company</strong>: Company/legal entity information</li>
+</ul>
+<p><strong>2. SALES ORDER ENTRY</strong></p>
+<ul>
+<li><strong>sale.order</strong>: Sales order header (equivalent to F4201/SalesTable)</li>
+<li><strong>sale.order.line</strong>: Sales order line items (equivalent to F4211/SalesLine)</li>
+<li><strong>sale.order.template</strong>: Sales order templates</li>
+<li><strong>crm.lead</strong>: Leads and opportunities</li>
+<li><strong>crm.opportunity</strong>: Opportunity tracking</li>
+<li><strong>product.pricelist</strong>: Price lists and pricing rules</li>
+<li><strong>sale.subscription</strong>: Recurring sales/subscriptions</li>
+<li><strong>sale.advance.payment.inv</strong>: Down payment invoicing</li>
+</ul>
+<p><strong>3. MATERIAL REQUIREMENTS PLANNING</strong></p>
+<ul>
+<li><strong>mrp.production</strong>: Manufacturing orders (equivalent to F4801/ProdTable)</li>
+<li><strong>stock.rule</strong>: Reordering rules and procurement policies</li>
+<li><strong>procurement.group</strong>: Procurement grouping</li>
+<li><strong>stock.warehouse.orderpoint</strong>: Reorder points and min/max levels (equivalent to ReqItemTable)</li>
+<li><strong>mrp.bom</strong>: Bill of materials (equivalent to F3002/BOMTable)</li>
+<li><strong>mrp.bom.line</strong>: BOM component lines</li>
+<li><strong>stock.move</strong>: Stock movements and planned transfers (equivalent to ReqTrans)</li>
+<li><strong>purchase.order</strong>: Purchase orders including planned purchases</li>
+</ul>
+<p><strong>4. BILL OF MATERIALS</strong></p>
+<ul>
+<li><strong>mrp.bom</strong>: BOM header defining product structure (equivalent to F3002/BOMTable)</li>
+<li><strong>mrp.bom.line</strong>: BOM lines with components and quantities (equivalent to BOM)</li>
+<li><strong>mrp.routing</strong>: Manufacturing routing/operations (equivalent to F3105/ProdRoute)</li>
+<li><strong>mrp.routing.workcenter</strong>: Routing operation work centers</li>
+<li><strong>mrp.workcenter</strong>: Work center master (machines, labor centers)</li>
+<li><strong>mrp.bom.byproduct</strong>: Co-products and by-products</li>
+<li><strong>product.template.attribute.value</strong>: Product variants and configurations</li>
+</ul>
+<p><strong>5. PURCHASING RAW MATERIALS</strong></p>
+<ul>
+<li><strong>purchase.requisition</strong>: Purchase requisitions/calls for tenders (equivalent to F43081/PurchReqTable)</li>
+<li><strong>purchase.order</strong>: Purchase order header (equivalent to F4301/PurchTable)</li>
+<li><strong>purchase.order.line</strong>: Purchase order lines (equivalent to F4311/PurchLine)</li>
+<li><strong>purchase.requisition.line</strong>: Purchase requisition lines</li>
+<li><strong>product.supplierinfo</strong>: Supplier product information and pricing</li>
+<li><strong>purchase.agreement</strong>: Blanket purchase agreements</li>
+<li><strong>res.partner</strong>: Vendor records with payment terms</li>
+<li><strong>account.payment.term</strong>: Payment terms definitions</li>
+</ul>
+<p><strong>6. RECEIVING PURCHASED MATERIALS</strong></p>
+<ul>
+<li><strong>stock.picking</strong>: Receipt/delivery orders (equivalent to VendPackingSlipJour/WHSLoadTable)</li>
+<li><strong>stock.move</strong>: Stock movements for receipts (equivalent to InventTrans)</li>
+<li><strong>stock.move.line</strong>: Detailed move lines with lots/serials</li>
+<li><strong>stock.quant</strong>: Inventory quants (actual on-hand by location)</li>
+<li><strong>stock.valuation.layer</strong>: Inventory valuation layers</li>
+<li><strong>stock.location</strong>: Physical locations for putaway</li>
+<li><strong>stock.putaway.rule</strong>: Automated putaway strategies</li>
+<li><strong>account.move</strong>: Accounting entries for received inventory (equivalent to F0911/LedgerJournalTrans)</li>
+</ul>
+<p><strong>7. WORK ORDER PROCESSING - MANUFACTURING</strong></p>
+<ul>
+<li><strong>mrp.production</strong>: Manufacturing/production order (equivalent to F4801/ProdTable)</li>
+<li><strong>mrp.workorder</strong>: Individual work center operations (equivalent to ProdRouteJob)</li>
+<li><strong>mrp.production.workcenter.line</strong>: Operation assignments (equivalent to F3105)</li>
+<li><strong>stock.move</strong>: Raw material consumption and finished goods production</li>
+<li><strong>mrp.workcenter.productivity</strong>: Work center productivity tracking</li>
+<li><strong>quality.check</strong>: Quality checkpoints in production</li>
+<li><strong>stock.scrap</strong>: Scrap recording during production</li>
+</ul>
+<p><strong>8. MATERIAL ISSUES TO PRODUCTION</strong></p>
+<ul>
+<li><strong>stock.move</strong>: Material consumption from stock to production (equivalent to F3121/ProdPickListTrans)</li>
+<li><strong>stock.picking</strong>: Pick list for production materials</li>
+<li><strong>stock.move.line</strong>: Detailed material picking with lots/serials</li>
+<li><strong>mrp.production</strong>: Links consumed materials to production orders</li>
+<li><strong>stock.quant</strong>: Updates on-hand inventory balances</li>
+<li><strong>mrp.abstract.workorder</strong>: Material availability for work orders</li>
+</ul>
+<p><strong>9. PRODUCTION OPERATIONS AND LABOR</strong></p>
+<ul>
+<li><strong>mrp.workcenter.productivity</strong>: Time tracking per operation (equivalent to JmgTermReg/F31122)</li>
+<li><strong>hr.employee</strong>: Employee master records</li>
+<li><strong>hr_attendance.attendance</strong>: Employee clock in/out</li>
+<li><strong>mrp.workorder</strong>: Operation completion and status</li>
+<li><strong>mrp.workcenter</strong>: Work center capacity and availability</li>
+<li><strong>resource.calendar</strong>: Working time calendars</li>
+<li><strong>resource.resource</strong>: Resources (equipment, labor)</li>
+<li><strong>hr.timesheet</strong>: Timesheet entries for costing</li>
+</ul>
+<p><strong>10. WORK ORDER COMPLETION</strong></p>
+<ul>
+<li><strong>mrp.production</strong>: Production order completion status</li>
+<li><strong>stock.move</strong>: Finished goods receipt into inventory (equivalent to F31114/ProdJournalTrans)</li>
+<li><strong>stock.valuation.layer</strong>: Cost layers for manufactured goods</li>
+<li><strong>stock.quant</strong>: On-hand inventory updates for finished goods</li>
+<li><strong>mrp.unbuild</strong>: Disassembly orders (reverse manufacturing)</li>
+<li><strong>account.move</strong>: Cost accounting entries for production</li>
+</ul>
+<p><strong>11. QUALITY MANAGEMENT</strong></p>
+<ul>
+<li><strong>quality.check</strong>: Quality inspection checkpoints (equivalent to InventQualityOrderTable)</li>
+<li><strong>quality.point</strong>: Quality control points in processes (equivalent to InventTestTable)</li>
+<li><strong>quality.alert</strong>: Quality alerts and non-conformances</li>
+<li><strong>quality.alert.stage</strong>: Alert workflow stages</li>
+<li><strong>quality.check.type</strong>: Types of quality checks</li>
+<li><strong>mrp.workorder</strong>: Quality gates in production routing</li>
+<li><strong>stock.picking</strong>: Quality hold locations</li>
+</ul>
+<p><strong>12. SALES ORDER FULFILLMENT &amp; SHIPPING</strong></p>
+<ul>
+<li><strong>stock.picking</strong>: Delivery orders and shipments (equivalent to WHSShipmentTable/F4611)</li>
+<li><strong>stock.move</strong>: Inventory movements for shipped goods</li>
+<li><strong>stock.move.line</strong>: Detailed picking with lot/serial tracking</li>
+<li><strong>stock.picking.batch</strong>: Wave/batch picking</li>
+<li><strong>sale.order</strong>: Sales order fulfillment tracking</li>
+<li><strong>stock.package</strong>: Package/container management</li>
+<li><strong>delivery.carrier</strong>: Shipping carrier integration</li>
+<li><strong>stock.immediate.transfer</strong>: Immediate transfer wizard</li>
+</ul>
+<p><strong>13. INVOICING AND ACCOUNTS RECEIVABLE</strong></p>
+<ul>
+<li><strong>account.move</strong>: Customer invoices (equivalent to CustInvoiceJour/F03B11)</li>
+<li><strong>account.move.line</strong>: Invoice line items (equivalent to CustInvoiceTrans/F03B13)</li>
+<li><strong>sale.order</strong>: Links invoices to sales orders</li>
+<li><strong>account.payment</strong>: Customer payments</li>
+<li><strong>account.bank.statement</strong>: Bank reconciliation</li>
+<li><strong>account.reconcile.model</strong>: Auto-reconciliation rules</li>
+<li><strong>res.partner.bank</strong>: Customer banking information</li>
+<li><strong>account.partial.reconcile</strong>: Partial payment matching</li>
+</ul>
+<p><strong>14. ACCOUNTS PAYABLE</strong></p>
+<ul>
+<li><strong>account.move</strong>: Vendor bills/invoices (equivalent to VendInvoiceJour/F0411)</li>
+<li><strong>account.move.line</strong>: Vendor invoice lines (equivalent to VendInvoiceTrans/F0413)</li>
+<li><strong>purchase.order</strong>: Purchase order for three-way matching</li>
+<li><strong>stock.picking</strong>: Receipt confirmation for matching</li>
+<li><strong>account.payment</strong>: Vendor payments (equivalent to VendPaymEntry/F0414)</li>
+<li><strong>account.payment.register</strong>: Payment registration wizard</li>
+<li><strong>res.partner</strong>: Vendor payment terms and banking</li>
+</ul>
+<p><strong>15. INVENTORY MANAGEMENT</strong></p>
+<ul>
+<li><strong>stock.move</strong>: All inventory transactions (equivalent to F4111/InventTrans)</li>
+<li><strong>stock.move.line</strong>: Detailed moves with locations, lots, serials</li>
+<li><strong>stock.quant</strong>: Real-time on-hand inventory by location (equivalent to InventSum/F4115)</li>
+<li><strong>stock.inventory</strong>: Inventory adjustments/cycle counts (equivalent to F4141)</li>
+<li><strong>stock.inventory.line</strong>: Adjustment line details</li>
+<li><strong>stock.production.lot</strong>: Lot/batch tracking</li>
+<li><strong>stock.lot.serial.number</strong>: Serial number tracking</li>
+<li><strong>stock.valuation.layer</strong>: Inventory valuation detail</li>
+<li><strong>stock.location</strong>: Multi-level location hierarchy</li>
+</ul>
+<p><strong>16. COSTING AND ACCOUNTING</strong></p>
+<ul>
+<li><strong>product.price.history</strong>: Product cost history</li>
+<li><strong>stock.valuation.layer</strong>: Inventory cost layers (equivalent to InventCostTrans/F4105)</li>
+<li><strong>account.move</strong>: General ledger entries (equivalent to F0911/LedgerJournalTrans)</li>
+<li><strong>account.move.line</strong>: Journal entry lines</li>
+<li><strong>account.account</strong>: Chart of accounts (equivalent to MainAccount/F0901)</li>
+<li><strong>account.analytic.account</strong>: Analytic/cost accounting</li>
+<li><strong>account.analytic.line</strong>: Analytic entries for cost tracking</li>
+<li><strong>product.template</strong>: Costing method (FIFO, AVCO, standard)</li>
+<li><strong>account.reconcile.model</strong>: Auto accounting rules</li>
+</ul>
+<p><strong>17. WAREHOUSE MANAGEMENT (ADVANCED)</strong></p>
+<ul>
+<li><strong>stock.location</strong>: Multi-level location hierarchy with zones</li>
+<li><strong>stock.warehouse</strong>: Warehouse configuration and routes</li>
+<li><strong>stock.route</strong>: Push/pull routing rules</li>
+<li><strong>stock.putaway.rule</strong>: Putaway strategies</li>
+<li><strong>stock.storage.category</strong>: Storage categories for slotting</li>
+<li><strong>stock.picking.batch</strong>: Batch picking/wave management</li>
+<li><strong>stock.package</strong>: Package/pallet tracking</li>
+<li><strong>stock.package.type</strong>: Package type definitions</li>
+<li><strong>stock.picking.type</strong>: Operation types and workflows</li>
+</ul>
+<p><strong>18. REPORTING AND ANALYTICS</strong></p>
+<ul>
+<li><strong>sale.report</strong>: Sales analysis (equivalent to CustStatistics)</li>
+<li><strong>purchase.report</strong>: Purchase analysis (equivalent to VendStatistics)</li>
+<li><strong>stock.report.reception</strong>: Receipt analysis</li>
+<li><strong>mrp.report.production</strong>: Production analysis</li>
+<li><strong>stock.quantity.history</strong>: Historical inventory snapshots</li>
+<li><strong>account.financial.report</strong>: Financial reporting</li>
+<li><strong>account.general.ledger</strong>: General ledger reports</li>
+<li><strong>stock.forecast.report</strong>: Demand forecasting</li>
+</ul>
+<hr>
+<h2><strong>KEY INTEGRATION COMPARISON</strong></h2>
+<p><strong>JDE Edwards → Dynamics 365 → Odoo</strong></p>
+<table>
+<thead>
+<tr>
+<th><strong>Function</strong></th>
+<th><strong>JD Edwards</strong></th>
+<th><strong>Dynamics 365</strong></th>
+<th><strong>Odoo</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sales Order</td>
+<td>F4201/F4211</td>
+<td>SalesTable/SalesLine</td>
+<td>sale.order/sale.order.line</td>
+</tr>
+<tr>
+<td>Production Order</td>
+<td>F4801</td>
+<td>ProdTable</td>
+<td>mrp.production</td>
+</tr>
+<tr>
+<td>Purchase Order</td>
+<td>F4301/F4311</td>
+<td>PurchTable/PurchLine</td>
+<td>purchase.order/purchase.order.line</td>
+</tr>
+<tr>
+<td>Inventory Transaction</td>
+<td>F4111</td>
+<td>InventTrans</td>
+<td>stock.move</td>
+</tr>
+<tr>
+<td>On-Hand Inventory</td>
+<td>F4115</td>
+<td>InventSum</td>
+<td>stock.quant</td>
+</tr>
+<tr>
+<td>BOM</td>
+<td>F3002</td>
+<td>BOMTable/BOM</td>
+<td>mrp.bom/mrp.bom.line</td>
+</tr>
+<tr>
+<td>Item Master</td>
+<td>F4101</td>
+<td>InventTable</td>
+<td>product.product</td>
+</tr>
+<tr>
+<td>GL Transactions</td>
+<td>F0911</td>
+<td>LedgerJournalTrans</td>
+<td>account.move.line</td>
+</tr>
+<tr>
+<td>Customer Master</td>
+<td>F0101</td>
+<td>CustTable</td>
+<td>res.partner</td>
+</tr>
+<tr>
+<td>Vendor Master</td>
+<td>F0101</td>
+<td>VendTable</td>
+<td>res.partner</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Integration Flow Example:</strong></p>
+<p><strong>JDE</strong>: F4211 (Sales) → F3411 (MRP) → F4801 (Production) → F4111 (Inventory) → F0911 (GL)</p>
+<p><strong>D365</strong>: SalesLine → ReqTrans → ProdTable → InventTrans → LedgerJournalTrans</p>
+<p><strong>Odoo</strong>: sale.order.line → stock.rule → mrp.production → stock.move → account.move.line</p>
+<p>All three systems follow similar integration patterns but with different table/model naming conventions and architectural approaches. JDE uses numbered tables, Dynamics 365 uses descriptive table names, and Odoo uses object-oriented model names with dot notation.</p>
+
+</body>
+</html>
