@@ -2706,6 +2706,25 @@ To tunnel a remote port 3002 on server2
 ssh -L 3002:localhost:3002 appadm@server2
 #+END_SRC
 
+** Connecting via ssh:
+
+`ssh -i ~/.ssh/id_bastion -t usrbastion@srv-bastion.example.com 'ssh -i ~/.ssh/id_lan -p 28 appusr@192.168.1.3'`
+
+Connecting to destination 192.168.1.3 via srv-bastion in ssh config 
+
+#+BEGIN_SRC
+
+Host srv-bastion
+  HostName srv-bastion
+  User usrbastion
+  IdentityFile ~/.ssh/id_bastion
+
+Host 192.168.1.3
+  HostName srv-bastion
+  User usrbastion
+  RequestTTY force
+  RemoteCommand ssh -i ~/.ssh/id_lan -p 28 appusr@192.168.1.3
+#+END_SRC
 
 * Fixing selinux permissions if the service is not starting despite the command works manually
 
